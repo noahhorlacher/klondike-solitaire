@@ -15,9 +15,10 @@ canvas {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin: 1em auto 3em auto;
+	margin: 7px auto 10px auto;
 	font-size: 1.2em;
 	font-weight: bold;
+	user-select: none;
 }
 
 btn {
@@ -42,4 +43,5 @@ btn:not([disabled='true']):hover {
 
 p {
 	color: white;
+	margin: 0;
 }

@@ -1,5 +1,5 @@
 // display settings
-const WIDTH = 20 + 7 * 120, HEIGHT = 740;
+const WIDTH = 20 + 7 * 120, HEIGHT = 685;
 const DESIGN = {
     BACKGROUND: {
         COLOR: "#68ab68"
@@ -32,12 +32,12 @@ const DESIGN = {
     ],
     CARD: {
         SIZE: {
-            X: 100,
-            Y: 140
+            X: 90,
+            Y: 126
         },
         RADIUS: 6,
         STACKING_OFFSET: {
-            OPEN: 33,
+            OPEN: 30,
             CLOSED: 10
         }
     },
