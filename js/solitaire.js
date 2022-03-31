@@ -1,5 +1,5 @@
 // display settings
-const WIDTH = 20 + 7 * 120, HEIGHT = 800;
+const WIDTH = 20 + 7 * 120, HEIGHT = 740;
 const DESIGN = {
     BACKGROUND: {
         COLOR: "#68ab68"
@@ -22,13 +22,13 @@ const DESIGN = {
         { POSITION: { X: WIDTH - 4 * 120, Y: 20 } }
     ],
     MAIN_STACKS: [
-        { POSITION: { X: 20 + 0 * 120, Y: 240 } },
-        { POSITION: { X: 20 + 1 * 120, Y: 240 } },
-        { POSITION: { X: 20 + 2 * 120, Y: 240 } },
-        { POSITION: { X: 20 + 3 * 120, Y: 240 } },
-        { POSITION: { X: 20 + 4 * 120, Y: 240 } },
-        { POSITION: { X: 20 + 5 * 120, Y: 240 } },
-        { POSITION: { X: 20 + 6 * 120, Y: 240 } }
+        { POSITION: { X: 20 + 0 * 120, Y: 180 } },
+        { POSITION: { X: 20 + 1 * 120, Y: 180 } },
+        { POSITION: { X: 20 + 2 * 120, Y: 180 } },
+        { POSITION: { X: 20 + 3 * 120, Y: 180 } },
+        { POSITION: { X: 20 + 4 * 120, Y: 180 } },
+        { POSITION: { X: 20 + 5 * 120, Y: 180 } },
+        { POSITION: { X: 20 + 6 * 120, Y: 180 } }
     ],
     CARD: {
         SIZE: {
@@ -749,7 +749,14 @@ function ondragend() {
     // empty drag_stack
     drag_stack = []
 
+    // empty drag target
     drag_target = null
+
+    // set mousedown flag as false (complete drag)
+    mousedown = false
+
+    // rerender
+    render()
 }
 
 // pull a card
