@@ -11,10 +11,13 @@ canvas {
 	margin: auto;
 }
 
-buttons {
+display {
 	display: flex;
 	justify-content: space-between;
+	align-items: center;
 	margin: 1em auto 3em auto;
+	font-size: 1.2em;
+	font-weight: bold;
 }
 
 btn {
@@ -23,7 +26,6 @@ btn {
 	box-sizing: border-box;
 	color: white;
 	background-color: hsl(300, 15%, 43%);
-	font-size: 1.2em;
 	padding: 0.5em 1.2em;
 	cursor: pointer;
 	transition: opacity 0.3s;
@@ -36,4 +38,8 @@ btn[disabled='true'] {
 
 btn:not([disabled='true']):hover {
 	background-color: hsl(300, 25%, 70%);
+}
+
+p {
+	color: white;
 }

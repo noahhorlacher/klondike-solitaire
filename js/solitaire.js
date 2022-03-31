@@ -74,6 +74,9 @@ const FPS = 60
 // whether or not the game is over
 let gameover
 
+// count moves
+let moves
+
 // array of all cards to copy from
 let initial_card_states = []
 
@@ -282,9 +285,13 @@ function reset() {
     drag_target = null
     gameover = false
     last_action == null
+    moves = 0
 
     // disable undo button
     document.querySelector('#undo').setAttribute('disabled', true)
+
+    // reset move display
+    document.querySelector('#moves').textContent = `Moves: 0`
 
     // stop win animation (if it's playing)
     if (animation_stack) animation_stack.forEach(stack => stack.forEach(card => {
@@ -394,6 +401,9 @@ function undo() {
     last_action = last_action.last_action
 
     if (!last_action) document.querySelector('#undo').setAttribute('disabled', true)
+
+    // decrement move count and update move display
+    document.querySelector('#moves').textContent = `Moves: ${--moves}`
 
     // rerender
     render()
@@ -662,7 +672,11 @@ function ondragend() {
                     last_action: last_action
                 }
 
+            // enable undo button
             document.querySelector('#undo').setAttribute('disabled', false)
+
+            // increment move count and update move display
+            document.querySelector('#moves').textContent = `Moves: ${++moves}`
 
             // remove card from old stack
             if (drag_target.where == 'main_stack') {
@@ -734,6 +748,9 @@ CANVAS.addEventListener('click', e => {
         // enable undo button
         document.querySelector('#undo').setAttribute('disabled', false)
 
+        // increment move count and update move display
+        document.querySelector('#moves').textContent = `Moves: ${++moves}`
+
         // pull a card
         open_pull_stack_cards = open_pull_stack_cards == pull_stack.length ? 0 : open_pull_stack_cards + 1
     }
@@ -757,7 +774,7 @@ document.querySelector('#undo').addEventListener('click', () => {
 document.querySelector('#reset').addEventListener('click', reset)
 
 // set width of button container
-document.querySelector('buttons').style.width = `${WIDTH}px`
+document.querySelector('display').style.width = `${WIDTH}px`
 
 // start
 setup()
