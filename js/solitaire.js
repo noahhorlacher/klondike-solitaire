@@ -97,7 +97,7 @@ let main_stacks // playing field
 let open_pull_stack_cards
 
 // drag and drop
-let mousedown
+let mouse_down
 let drag_stack
 let drag_target
 let drag_position = {
@@ -113,6 +113,10 @@ let last_action
 
 // timer variables
 let started, timer, start_time
+
+// doubleclick variables
+let doubleclick_timer = 0, doubleclick_prevent = false
+const DOUBLECLICK_DELAY = 100
 
 // main rendering function
 function render() {
@@ -220,7 +224,10 @@ function render_main_stacks() {
     // render main_stacks
     for (let x = 0; x < 7; x++) {
         let current_offset = 0
-        main_stacks[x].forEach((card, y) => {
+
+        // render each card
+        for (let y = 0; y < main_stacks[x].length; y++) {
+            let card = main_stacks[x][y]
             // save card position for drag and drop
             card.position = {
                 x: DESIGN.MAIN_STACKS[x].POSITION.X,
@@ -238,7 +245,7 @@ function render_main_stacks() {
 
             // increment offset
             if (y < main_stacks[x].length - 1) current_offset += DESIGN.CARD.STACKING_OFFSET[card.open ? 'OPEN' : 'CLOSED']
-        })
+        }
     }
 }
 
@@ -444,13 +451,19 @@ function solve() {
     start_win_animation()
 }
 
-// if started dragging
-function ondragstart() {
-    // check if a card and which one is being dragged
-    let dragcard
+// check which card and stack is being hovered
+function get_hover_target() {
+    render()
+
+    let hovered_card = null
+    let hovered_stack = null
 
     // go through pull_stack to check for drag (uppermost one counts)
-    if (open_pull_stack_cards > 0) {
+    if (
+        open_pull_stack_cards > 0 &&
+        mouse_position.y < DESIGN.MAIN_STACKS[0].POSITION.Y &&
+        mouse_position.x < DESIGN.PUT_STACKS[3].POSITION.X
+    ) {
         let opencard_index = [...pull_stack].findIndex(c => c.open === true)
         let pull_stack_opencard = pull_stack[opencard_index]
         if (mouse_over(
@@ -459,8 +472,8 @@ function ondragstart() {
             DESIGN.CARD.SIZE.X,
             DESIGN.CARD.SIZE.Y
         )) {
-            dragcard = [pull_stack_opencard]
-            drag_target = {
+            hovered_card = pull_stack_opencard
+            hovered_stack = {
                 where: 'pull_stack',
                 x: opencard_index
             }
@@ -468,7 +481,10 @@ function ondragstart() {
     }
 
     // go through main_stacks to check for drag (uppermost one counts)
-    if (!dragcard) {
+    if (
+        !hovered_card &&
+        mouse_position.y > DESIGN.MAIN_STACKS[0].POSITION.Y
+    ) {
         for (let x = 0; x < main_stacks.length; x++) {
             // if stack has cards
             if (main_stacks[x].length > 0) {
@@ -476,31 +492,39 @@ function ondragstart() {
                 for (let y = main_stacks[x].length - 1; y >= 0; y--) {
                     let card = main_stacks[x][y]
 
-                    // if card is hovered and open
-                    if (card.open && mouse_over(
-                        card.position.x,
-                        card.position.y,
-                        DESIGN.CARD.SIZE.X,
-                        DESIGN.CARD.SIZE.Y
-                    )) {
-                        drag_target = {
+                    // if card is hovered, has position, and is open
+                    if (
+                        card.open &&
+                        'position' in card &&
+                        mouse_over(
+                            card.position.x,
+                            card.position.y,
+                            DESIGN.CARD.SIZE.X,
+                            DESIGN.CARD.SIZE.Y
+                        )
+                    ) {
+                        hovered_stack = {
                             where: 'main_stack',
                             x: x,
                             y: y
                         }
-                        dragcard = [card]
+                        hovered_card = card
                         break
                     }
                 }
 
                 // break if found
-                if (drag_target) break
+                if (hovered_card) break
             }
         }
     }
 
     // go through put_stacks to check for drag (uppermost one counts)
-    if (!dragcard) {
+    if (
+        !hovered_card &&
+        mouse_position.y < DESIGN.MAIN_STACKS[0].POSITION.Y &&
+        mouse_position.x >= DESIGN.PUT_STACKS[3].POSITION.X
+    ) {
         for (let x = 0; x < put_stacks.length; x++) {
             // if stack has cards
             if (put_stacks[x].length > 0) {
@@ -511,41 +535,142 @@ function ondragstart() {
                     DESIGN.CARD.SIZE.X,
                     DESIGN.CARD.SIZE.Y
                 )) {
-                    drag_target = {
+                    hovered_stack = {
                         where: 'put_stack',
                         x: x
                     }
-                    dragcard = [put_stacks[x][put_stacks[x].length - 1]]
+                    hovered_card = put_stacks[x][put_stacks[x].length - 1]
                     break
                 }
             }
         }
     }
 
-    // if cards are being dragged
-    if (dragcard) {
-        // if a card from main_stacks is dragged, check if there are cards on top
-        if (main_stacks.some(s => s.includes(dragcard[0]))) {
-            // get stack index
-            let i = main_stacks.findIndex(s => s.includes(dragcard[0]))
-
-            // if not last card of stack
-            if (dragcard != [...main_stacks[i]].reverse()[0]) {
-                // get card index
-                let j = main_stacks[i].findIndex(c => c == dragcard[0])
-                drag_stack = [...main_stacks[i]].splice(j)
-            }
-        } else drag_stack = dragcard
-
-        drag_position.x = mouse_position.x
-        drag_position.y = mouse_position.y
-    } else {
-        mousedown = false
+    return {
+        hovered_card: hovered_card,
+        hovered_stack: hovered_stack
     }
 }
 
+// if started dragging
+function handle_drag_start() {
+    // check if a card and which one is being dragged
+    let hover_target = get_hover_target()
+
+    // if cards are being dragged
+    if (hover_target.hovered_card) {
+        // update drag target
+        drag_target = hover_target.hovered_stack
+
+        // if a card from main_stacks is dragged, check if there are cards on top
+        if (main_stacks.some(s => s.includes([hover_target.hovered_card]))) {
+            // get stack index
+            let i = main_stacks.findIndex(s => s.includes([hover_target.hovered_card]))
+
+            // if not last card of stack
+            if (hover_target.hovered_card != [...main_stacks[i]].reverse()[0]) {
+                // get card index
+                let j = main_stacks[i].findIndex(c => c == [hover_target.hovered_card])
+                drag_stack = [...main_stacks[i]].splice(j)
+            }
+        } else drag_stack = [hover_target.hovered_card]
+
+        // update drag position
+        drag_position.x = mouse_position.x
+        drag_position.y = mouse_position.y
+    } else mouse_down = false
+}
+
 // while dragging
-function ondrag() {
+function handle_drag() {
+    render()
+}
+
+// if stopped dragging
+function handle_drag_end() {
+    let hover_target = get_hover_target()
+
+    // if dropping on put or main stack and dropping on a different stack than starting stack
+    if (
+        hover_target.hovered_stack &&
+        ['put_stacks', 'main_stacks'].includes(hover_target.hovered_stack.where) &&
+        (
+            hover_target.hovered_stack.where != drag_target.where ||
+            hover_target.hovered_stack.x != drag_target.x
+        )
+    ) {
+        let popped_cards = [...drag_stack]
+
+        // check if move is valid
+        if (check_for_match(hover_target.hovered_stack, popped_cards[0])) {
+            // save action
+            if (drag_target.where == 'pull_stack')
+                last_action = {
+                    action: 'drop',
+                    drag_target: drag_target,
+                    drop_target: hover_target.hovered_stack,
+                    popped_cards: popped_cards,
+                    opened_card: false,
+                    old_open_pull_stack_cards: open_pull_stack_cards,
+                    last_action: last_action
+                }
+            else
+                last_action = {
+                    action: 'drop',
+                    drag_target: drag_target,
+                    drop_target: hover_target.hovered_stack,
+                    popped_cards: popped_cards,
+                    opened_card: false,
+                    last_action: last_action
+                }
+
+            // enable undo button
+            UI.BTN_UNDO.setAttribute('disabled', false)
+
+            // increment move count and update move display
+            UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+            // start timer
+            if (!started) start_timer()
+
+            // remove card from old stack
+            if (drag_target.where == 'main_stack') {
+                // remove cards from mainstack
+                main_stacks[drag_target.x].splice(drag_target.y)
+                // open uppermost card of drag target if it has one left
+                if (main_stacks[drag_target.x].length > 0) {
+                    main_stacks[drag_target.x][main_stacks[drag_target.x].length - 1].open = true
+                    last_action.opened_card = true
+                }
+            } else if (drag_target.where == 'put_stack') {
+                // remove card from putstack
+                put_stacks[drag_target.x].splice(put_stacks[drag_target.x].length - 1)
+            } else if (drag_target.where == 'pull_stack') {
+                // remove card from pull_stack
+                pull_stack.splice(drag_target.x, 1)
+                // decrement open pull_stack cards amount
+                open_pull_stack_cards--
+            }
+
+            // push cards to new stack
+            if (hover_target.hovered_stack.where == 'main_stack') main_stacks[hover_target.hovered_stack.x].push(...popped_cards)
+            else if (hover_target.hovered_stack.where == 'put_stack') put_stacks[hover_target.hovered_stack.x].push(...popped_cards)
+
+            // check if won/lost
+            check_gameover()
+        }
+    }
+
+    // empty drag_stack
+    drag_stack = []
+
+    // empty drag target
+    drag_target = null
+
+    // set mouse_down flag as false (complete drag)
+    mouse_down = false
+
+    // rerender
     render()
 }
 
@@ -621,150 +746,6 @@ function start_timer() {
     started = true
 }
 
-// if stopped dragging
-function ondragend() {
-    let drop_target
-
-    // go through main_stacks to check for a card mouseover
-    for (let x = 0; x < main_stacks.length; x++) {
-        // whether some card in the stack is hovered 
-        let hovering_over_some_card = main_stacks[x].some(card => {
-            if (!card.position) return false
-            return mouse_over(
-                card.position.x,
-                card.position.y,
-                DESIGN.CARD.SIZE.X,
-                DESIGN.CARD.SIZE.Y
-            )
-        })
-
-        // whether the base of the stack is hovered
-        let mouse_over_base = mouse_over(
-            DESIGN.MAIN_STACKS[x].POSITION.X,
-            DESIGN.MAIN_STACKS[x].POSITION.Y,
-            DESIGN.CARD.SIZE.X,
-            DESIGN.CARD.SIZE.Y
-        )
-
-        if (hovering_over_some_card || mouse_over_base) {
-            drop_target = {
-                where: 'main_stack',
-                x: x
-            }
-            break
-        }
-    }
-
-    // go through put_stacks to check for drag (uppermost one counts)
-    if (!drop_target) {
-        for (let x = 0; x < put_stacks.length; x++) {
-            // whether some card in the stack is hovered
-            let hovering_over_some_card = put_stacks[x].some(card => {
-                if (!card.position) return false
-                return mouse_over(
-                    card.position.x,
-                    card.position.y,
-                    DESIGN.CARD.SIZE.X,
-                    DESIGN.CARD.SIZE.Y
-                )
-            })
-
-            // whether the base of the stack is hovered
-            let mouse_over_base = mouse_over(
-                DESIGN.PUT_STACKS[x].POSITION.X,
-                DESIGN.PUT_STACKS[x].POSITION.Y,
-                DESIGN.CARD.SIZE.X,
-                DESIGN.CARD.SIZE.Y
-            )
-
-            if (hovering_over_some_card || mouse_over_base) {
-                drop_target = {
-                    where: 'put_stack',
-                    x: x
-                }
-                break
-            }
-        }
-    }
-
-    // if dropping something
-    if (drop_target && (drop_target.where != drag_target.where || drop_target.x != drag_target.x)) {
-        let popped_cards = [...drag_stack]
-
-        // check if move is valid
-        if (check_for_match(drop_target, popped_cards[0])) {
-            // save action
-            if (drag_target.where == 'pull_stack')
-                last_action = {
-                    action: 'drop',
-                    drag_target: drag_target,
-                    drop_target: drop_target,
-                    popped_cards: popped_cards,
-                    opened_card: false,
-                    old_open_pull_stack_cards: open_pull_stack_cards,
-                    last_action: last_action
-                }
-            else
-                last_action = {
-                    action: 'drop',
-                    drag_target: drag_target,
-                    drop_target: drop_target,
-                    popped_cards: popped_cards,
-                    opened_card: false,
-                    last_action: last_action
-                }
-
-            // enable undo button
-            UI.BTN_UNDO.setAttribute('disabled', false)
-
-            // increment move count and update move display
-            UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
-
-            // start timer
-            if (!started) start_timer()
-
-            // remove card from old stack
-            if (drag_target.where == 'main_stack') {
-                // remove cards from mainstack
-                main_stacks[drag_target.x].splice(drag_target.y)
-                // open uppermost card of drag target if it has one left
-                if (main_stacks[drag_target.x].length > 0) {
-                    main_stacks[drag_target.x][main_stacks[drag_target.x].length - 1].open = true
-                    last_action.opened_card = true
-                }
-            } else if (drag_target.where == 'put_stack') {
-                // remove card from putstack
-                put_stacks[drag_target.x].splice(put_stacks[drag_target.x].length - 1)
-            } else if (drag_target.where == 'pull_stack') {
-                // remove card from pull_stack
-                pull_stack.splice(drag_target.x, 1)
-                // decrement open pull_stack cards amount
-                open_pull_stack_cards--
-            }
-
-            // push cards to new stack
-            if (drop_target.where == 'main_stack') main_stacks[drop_target.x].push(...popped_cards)
-            // push cards to new stack
-            else if (drop_target.where == 'put_stack') put_stacks[drop_target.x].push(...popped_cards)
-
-            // check if won/lost
-            check_gameover()
-        }
-    }
-
-    // empty drag_stack
-    drag_stack = []
-
-    // empty drag target
-    drag_target = null
-
-    // set mousedown flag as false (complete drag)
-    mousedown = false
-
-    // rerender
-    render()
-}
-
 // pull a card
 function pull_card() {
     // ignore if no cards in pull stack
@@ -793,6 +774,30 @@ function pull_card() {
     render()
 }
 
+// handle click in canvas
+function handle_click() {
+    // for drag check
+    mouse_down = false
+
+    if (loading || gameover) return // skip if loading or game over
+
+    // pull card on pull_stack left side click
+    if (mouse_over(
+        DESIGN.PULL_STACK.POSITION.X, DESIGN.PULL_STACK.POSITION.Y,
+        DESIGN.CARD.SIZE.X, DESIGN.CARD.SIZE.Y)
+    ) pull_card()
+}
+
+// TODO: handle doubleclick in canvas
+function handle_doubleclick() {
+    let hover_target = get_hover_target()
+    if (hover_target.hovered_card) {
+        /*
+            TODO: IMPLEMENT AUTOMATIC CARD PLACING ON DOUBLECLICK
+        */
+    }
+}
+
 // update mouse position and check for drag
 document.addEventListener('mousemove', e => {
     if (loading || gameover) return // skip if loading or game over
@@ -804,32 +809,33 @@ document.addEventListener('mousemove', e => {
 
     // drag check/rerender only when inside canvas
     if (mouse_over(0, 0, WIDTH * SCALE, HEIGHT * SCALE)) {
-        if (drag_stack.length > 0) ondrag()
-        else if (mousedown) ondragstart()
+        if (drag_stack.length > 0) handle_drag()
+        else if (mouse_down) handle_drag_start()
     }
 })
 
-// event checking
-UI.CANVAS.addEventListener('click', e => {
-    // for drag check
-    mousedown = false
+// check for click in canvas
+UI.CANVAS.addEventListener('click', e =>
+    doubleclick_timer = setTimeout(() => {
+        if (!doubleclick_prevent) handle_click()
+        doubleclick_prevent = false
+    }, DOUBLECLICK_DELAY)
+)
 
-    if (loading || gameover) return // skip if loading or game over
-
-    // pull card on pull_stack left side click
-    if (mouse_over(
-        DESIGN.PULL_STACK.POSITION.X, DESIGN.PULL_STACK.POSITION.Y,
-        DESIGN.CARD.SIZE.X, DESIGN.CARD.SIZE.Y)
-    ) pull_card()
+// check for doubleclick in canvas
+UI.CANVAS.addEventListener('dblclick', e => {
+    clearTimeout(doubleclick_timer)
+    doubleclick_prevent = true
+    handle_doubleclick()
 })
 
 // check for drag and drop
 UI.CANVAS.addEventListener('mousedown', e => {
-    mousedown = true
+    mouse_down = true
 })
 UI.CANVAS.addEventListener('mouseup', e => {
-    if (drag_stack.length > 0) ondragend()
-    mousedown = false
+    if (drag_stack.length > 0) handle_drag_end()
+    mouse_down = false
 })
 
 // button actions
