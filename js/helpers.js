@@ -33,6 +33,16 @@ function load_image(path) {
     })
 }
 
+// random float between min and max inclusive
+function random_range(min, max) {
+    return min + (Math.random() * (max - min))
+}
+
+// random int between min and max inclusive
+function random_range_i(min, max) {
+    return Math.floor(min + (Math.random() * ((max + 1) - min)))
+}
+
 // check if mouse is in rectangle
 function mouse_over(pos_x, pos_y, size_x, size_y) {
     return mouse_position.x >= pos_x && mouse_position.x <= pos_x + size_x && mouse_position.y >= pos_y && mouse_position.y <= pos_y + size_y
