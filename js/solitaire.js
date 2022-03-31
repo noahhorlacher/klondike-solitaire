@@ -1,47 +1,47 @@
 // display settings
-const WIDTH = 20 + 7 * 120, HEIGHT = 685;
+const SCALE = 2
+const WIDTH = 860, HEIGHT = 685;
 const DESIGN = {
     BACKGROUND: {
         COLOR: "#68ab68"
     },
     STACK: {
         COLOR: "#fffb",
-        LINE_WIDTH: 2
+        LINE_WIDTH: 2 * SCALE
     },
     PULL_STACK: {
         POSITION: {
-            X: 20,
-            Y: 20
+            X: 20 * SCALE,
+            Y: 20 * SCALE
         },
-        STACKING_OFFSET: 20
+        STACKING_OFFSET: 20 * SCALE
     },
     PUT_STACKS: [
-        { POSITION: { X: WIDTH - 1 * 120, Y: 20 } },
-        { POSITION: { X: WIDTH - 2 * 120, Y: 20 } },
-        { POSITION: { X: WIDTH - 3 * 120, Y: 20 } },
-        { POSITION: { X: WIDTH - 4 * 120, Y: 20 } }
+        { POSITION: { X: (WIDTH - 1 * 120) * SCALE, Y: 20 * SCALE } },
+        { POSITION: { X: (WIDTH - 2 * 120) * SCALE, Y: 20 * SCALE } },
+        { POSITION: { X: (WIDTH - 3 * 120) * SCALE, Y: 20 * SCALE } },
+        { POSITION: { X: (WIDTH - 4 * 120) * SCALE, Y: 20 * SCALE } }
     ],
     MAIN_STACKS: [
-        { POSITION: { X: 20 + 0 * 120, Y: 180 } },
-        { POSITION: { X: 20 + 1 * 120, Y: 180 } },
-        { POSITION: { X: 20 + 2 * 120, Y: 180 } },
-        { POSITION: { X: 20 + 3 * 120, Y: 180 } },
-        { POSITION: { X: 20 + 4 * 120, Y: 180 } },
-        { POSITION: { X: 20 + 5 * 120, Y: 180 } },
-        { POSITION: { X: 20 + 6 * 120, Y: 180 } }
+        { POSITION: { X: (20 + 0 * 120) * SCALE, Y: 180 * SCALE } },
+        { POSITION: { X: (20 + 1 * 120) * SCALE, Y: 180 * SCALE } },
+        { POSITION: { X: (20 + 2 * 120) * SCALE, Y: 180 * SCALE } },
+        { POSITION: { X: (20 + 3 * 120) * SCALE, Y: 180 * SCALE } },
+        { POSITION: { X: (20 + 4 * 120) * SCALE, Y: 180 * SCALE } },
+        { POSITION: { X: (20 + 5 * 120) * SCALE, Y: 180 * SCALE } },
+        { POSITION: { X: (20 + 6 * 120) * SCALE, Y: 180 * SCALE } }
     ],
     CARD: {
         SIZE: {
-            X: 90,
-            Y: 126
+            X: 90 * SCALE,
+            Y: 126 * SCALE
         },
-        RADIUS: 6,
+        RADIUS: 6 * SCALE,
         STACKING_OFFSET: {
-            OPEN: 30,
-            CLOSED: 10
+            OPEN: 30 * SCALE,
+            CLOSED: 10 * SCALE
         }
-    },
-    CARDS: []
+    }
 }
 
 // UI
@@ -127,7 +127,7 @@ function render() {
 function render_board() {
     // render background
     CTX.fillStyle = DESIGN.BACKGROUND.COLOR
-    CTX.fillRect(0, 0, WIDTH, HEIGHT)
+    CTX.fillRect(0, 0, WIDTH * SCALE, HEIGHT * SCALE)
 
     // render stacks
     CTX.strokeStyle = DESIGN.STACK.COLOR
@@ -348,6 +348,12 @@ function reset() {
 
 // setup the game
 async function setup() {
+    // set canvas size
+    UI.CANVAS.width = WIDTH * SCALE
+    UI.CANVAS.height = HEIGHT * SCALE
+    UI.CANVAS.style.width = `${WIDTH}px`
+    UI.CANVAS.style.height = `${HEIGHT}px`
+
     // load card images
     // path prefix for card images
     const card_images_root = '/cards/'
@@ -793,11 +799,11 @@ document.addEventListener('mousemove', e => {
 
     // get mouse coordinates
     const RECT = UI.CANVAS.getBoundingClientRect()
-    mouse_position.x = e.clientX - RECT.left
-    mouse_position.y = e.clientY - RECT.top
+    mouse_position.x = (e.clientX - RECT.left) * SCALE
+    mouse_position.y = (e.clientY - RECT.top) * SCALE
 
     // drag check/rerender only when inside canvas
-    if (mouse_over(0, 0, WIDTH, HEIGHT)) {
+    if (mouse_over(0, 0, WIDTH * SCALE, HEIGHT * SCALE)) {
         if (drag_stack.length > 0) ondrag()
         else if (mousedown) ondragstart()
     }
@@ -834,10 +840,6 @@ UI.BTN_RESET.addEventListener('click', reset)
 
 // set width of button container
 UI.CONTAINER_CONTROLS.style.width = `${WIDTH}px`
-
-// set width and height
-UI.CANVAS.width = WIDTH
-UI.CANVAS.height = HEIGHT
 
 // start
 setup()
