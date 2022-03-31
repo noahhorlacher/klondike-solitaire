@@ -37,7 +37,7 @@ const DESIGN = {
         },
         RADIUS: 6,
         STACKING_OFFSET: {
-            OPEN: 35,
+            OPEN: 33,
             CLOSED: 10
         }
     },
@@ -330,9 +330,6 @@ async function setup() {
 
     // start
     reset()
-    /* TESTING */
-    mainstacks[6][5].open = true
-    render()
 }
 
 // if started dragging
@@ -440,9 +437,36 @@ function ondrag() {
     render()
 }
 
+// check if a card can be dropped on a target
 function check_for_match(drop_target, drop_card) {
-    if (drop_target.where == 'putstack' && putstacks[drop_target.x].length == 0 && popped_cards[0].value == 'A') return true
-    return true
+    if (drop_target.where == 'putstack') {
+        let target_stack = putstacks[drop_target.x]
+        // can't drop card on already full putstack
+        if (target_stack.length == 13) return false
+        // can only drop single card on putstack
+        if (dragstack.length > 1) return false
+        // if putstack empty, only ace drop is allowed
+        if (target_stack.length == 0) return drop_card.value == 'A'
+        // drop only same color and value one higher on non-empty putstack
+        let top_card = target_stack[target_stack.length - 1]
+        if (
+            top_card.color == drop_card.color &&
+            CARD_VALUES.indexOf(top_card.value) == CARD_VALUES.indexOf(drop_card.value) - 1
+        ) return true
+    } else if (drop_target.where == 'mainstack') {
+        let target_stack = mainstacks[drop_target.x]
+        // if mainstack empty, only king drop is allowed
+        if (target_stack.length == 0) return drop_card.value == 'K'
+        // drop only opposite color and value one lower on non-empty mainstack
+        let top_card = target_stack[target_stack.length - 1]
+        if (
+            CARD_COLOR_MATCH[top_card.color].includes(drop_card.color) &&
+            CARD_VALUES.indexOf(top_card.value) == CARD_VALUES.indexOf(drop_card.value) + 1
+        ) return true
+    }
+
+    // else, no match
+    return false
 }
 
 // if stopped dragging
