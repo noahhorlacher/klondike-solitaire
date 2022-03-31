@@ -44,19 +44,28 @@ const DESIGN = {
     CARDS: []
 }
 
+// UI
+const UI = {
+    CANVAS: document.querySelector('canvas'),
+    CONTAINER_CONTROLS: document.querySelector('#container_controls'),
+    BTN_UNDO: document.querySelector('#btn_undo'),
+    LABEL_TIMER: document.querySelector('#label_timer'),
+    LABEL_MOVES: document.querySelector('#label_moves'),
+    BTN_RESET: document.querySelector('#btn_reset')
+}
+
 // mouse position relative to canvas
 let mouse_position = {
     x: null,
     y: null
 }
 
-// get canvas and context
-const CANVAS = document.querySelector('canvas')
-const CTX = CANVAS.getContext('2d')
+// get drawing context
+const CTX = UI.CANVAS.getContext('2d')
 
 // set width and height
-CANVAS.width = WIDTH
-CANVAS.height = HEIGHT
+UI.CANVAS.width = WIDTH
+UI.CANVAS.height = HEIGHT
 
 // card properties
 const CARD_VALUES = 'A23456789TJQK'.split('')
@@ -105,6 +114,9 @@ let loading = true
 
 // for undo functionality
 let last_action
+
+// timer variables
+let started, timer, start_time
 
 // main rendering function
 function render() {
@@ -286,12 +298,13 @@ function reset() {
     gameover = false
     last_action == null
     moves = 0
+    started = false
 
     // disable undo button
-    document.querySelector('#undo').setAttribute('disabled', true)
+    UI.BTN_UNDO.setAttribute('disabled', true)
 
     // reset move display
-    document.querySelector('#moves').textContent = `Moves: 0`
+    UI.LABEL_MOVES.textContent = `Moves: 0`
 
     // stop win animation (if it's playing)
     if (animation_stack) animation_stack.forEach(stack => stack.forEach(card => {
@@ -331,6 +344,10 @@ function reset() {
 
     // start rendering
     render()
+
+    // start timer
+    if (timer) clearInterval(timer)
+    UI.LABEL_TIMER.textContent = 'Time: 00:00:00'
 }
 
 // setup the game
@@ -400,10 +417,10 @@ function undo() {
     // replace last action with last last action
     last_action = last_action.last_action
 
-    if (!last_action) document.querySelector('#undo').setAttribute('disabled', true)
+    if (!last_action) UI.BTN_UNDO.setAttribute('disabled', true)
 
     // decrement move count and update move display
-    document.querySelector('#moves').textContent = `Moves: ${--moves}`
+    UI.LABEL_MOVES.textContent = `Moves: ${--moves}`
 
     // rerender
     render()
@@ -537,7 +554,10 @@ function check_gameover() {
         gameover = true
 
         // disable undo button
-        document.querySelector('#undo').setAttribute('disabled', true)
+        UI.BTN_UNDO.setAttribute('disabled', true)
+
+        // stop timer
+        if (timer) clearInterval(timer)
 
         // trigger rerender so card falls in place first
         render()
@@ -577,6 +597,26 @@ function check_for_match(drop_target, drop_card) {
 
     // else, no match
     return false
+}
+
+// start the timer
+function start_timer() {
+    start_time = new Date().getTime()
+    timer = setInterval(() => {
+        let t = new Date().getTime() - start_time
+        let h = Math.floor(t / 3600000)
+        h = h.toString().length == 1 ? '0' + h : h
+        t -= h * 3600000
+        let m = Math.floor(t / 60000)
+        m = m.toString().length == 1 ? '0' + m : m
+        t -= m * 60000
+        let s = Math.floor(t / 1000)
+        s = s.toString().length == 1 ? '0' + s : s
+        t -= s * 1000
+
+        UI.LABEL_TIMER.textContent = `Time: ${h}:${m}:${s}`
+    }, 100)
+    started = true
 }
 
 // if stopped dragging
@@ -673,10 +713,13 @@ function ondragend() {
                 }
 
             // enable undo button
-            document.querySelector('#undo').setAttribute('disabled', false)
+            UI.BTN_UNDO.setAttribute('disabled', false)
 
             // increment move count and update move display
-            document.querySelector('#moves').textContent = `Moves: ${++moves}`
+            UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+            // start timer
+            if (!started) start_timer()
 
             // remove card from old stack
             if (drag_target.where == 'main_stack') {
@@ -718,7 +761,7 @@ document.addEventListener('mousemove', e => {
     if (loading || gameover) return // skip if loading or game over
 
     // get mouse coordinates
-    const RECT = CANVAS.getBoundingClientRect()
+    const RECT = UI.CANVAS.getBoundingClientRect()
     mouse_position.x = e.clientX - RECT.left
     mouse_position.y = e.clientY - RECT.top
 
@@ -730,7 +773,7 @@ document.addEventListener('mousemove', e => {
 })
 
 // event checking
-CANVAS.addEventListener('click', e => {
+UI.CANVAS.addEventListener('click', e => {
     // for drag check
     mousedown = false
 
@@ -746,10 +789,13 @@ CANVAS.addEventListener('click', e => {
         }
 
         // enable undo button
-        document.querySelector('#undo').setAttribute('disabled', false)
+        UI.BTN_UNDO.setAttribute('disabled', false)
 
         // increment move count and update move display
-        document.querySelector('#moves').textContent = `Moves: ${++moves}`
+        UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+        // start timer
+        if (!started) start_timer()
 
         // pull a card
         open_pull_stack_cards = open_pull_stack_cards == pull_stack.length ? 0 : open_pull_stack_cards + 1
@@ -759,22 +805,22 @@ CANVAS.addEventListener('click', e => {
 })
 
 // check for drag and drop
-CANVAS.addEventListener('mousedown', e => {
+UI.CANVAS.addEventListener('mousedown', e => {
     mousedown = true
 })
-CANVAS.addEventListener('mouseup', e => {
+UI.CANVAS.addEventListener('mouseup', e => {
     if (drag_stack.length > 0) ondragend()
     mousedown = false
 })
 
 // button actions
-document.querySelector('#undo').addEventListener('click', () => {
-    if (document.querySelector('#undo').getAttribute('disabled') == 'false') undo()
+UI.BTN_UNDO.addEventListener('click', () => {
+    if (UI.BTN_UNDO.getAttribute('disabled') == 'false') undo()
 })
-document.querySelector('#reset').addEventListener('click', reset)
+UI.BTN_RESET.addEventListener('click', reset)
 
 // set width of button container
-document.querySelector('display').style.width = `${WIDTH}px`
+UI.CONTAINER_CONTROLS.style.width = `${WIDTH}px`
 
 // start
 setup()
