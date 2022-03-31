@@ -63,10 +63,6 @@ let mouse_position = {
 // get drawing context
 const CTX = UI.CANVAS.getContext('2d')
 
-// set width and height
-UI.CANVAS.width = WIDTH
-UI.CANVAS.height = HEIGHT
-
 // card properties
 const CARD_VALUES = 'A23456789TJQK'.split('')
 const CARD_COLORS = 'HDCS'.split('')
@@ -296,7 +292,7 @@ function reset() {
     drag_position.x = drag_position.y = null
     drag_target = null
     gameover = false
-    last_action == null
+    last_action = null
     moves = 0
     started = false
 
@@ -756,6 +752,34 @@ function ondragend() {
     drag_target = null
 }
 
+// pull a card
+function pull_card() {
+    // ignore if no cards in pull stack
+    if (pull_stack.length == 0) return
+
+    // save action
+    last_action = {
+        action: 'pull',
+        old_open_pull_stack_cards: open_pull_stack_cards,
+        last_action: last_action
+    }
+
+    // enable undo button
+    UI.BTN_UNDO.setAttribute('disabled', false)
+
+    // increment move count and update move display
+    UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+    // start timer
+    if (!started) start_timer()
+
+    // pull a card
+    open_pull_stack_cards = open_pull_stack_cards == pull_stack.length ? 0 : open_pull_stack_cards + 1
+
+    // rerender
+    render()
+}
+
 // update mouse position and check for drag
 document.addEventListener('mousemove', e => {
     if (loading || gameover) return // skip if loading or game over
@@ -779,29 +803,11 @@ UI.CANVAS.addEventListener('click', e => {
 
     if (loading || gameover) return // skip if loading or game over
 
-    if (mouse_over(DESIGN.PULL_STACK.POSITION.X, DESIGN.PULL_STACK.POSITION.Y, DESIGN.CARD.SIZE.X, DESIGN.CARD.SIZE.Y)) {
-        // clicked on pull_stack left side
-        // save action
-        last_action = {
-            action: 'pull',
-            old_open_pull_stack_cards: open_pull_stack_cards,
-            last_action: last_action
-        }
-
-        // enable undo button
-        UI.BTN_UNDO.setAttribute('disabled', false)
-
-        // increment move count and update move display
-        UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
-
-        // start timer
-        if (!started) start_timer()
-
-        // pull a card
-        open_pull_stack_cards = open_pull_stack_cards == pull_stack.length ? 0 : open_pull_stack_cards + 1
-    }
-
-    render()
+    // pull card on pull_stack left side click
+    if (mouse_over(
+        DESIGN.PULL_STACK.POSITION.X, DESIGN.PULL_STACK.POSITION.Y,
+        DESIGN.CARD.SIZE.X, DESIGN.CARD.SIZE.Y)
+    ) pull_card()
 })
 
 // check for drag and drop
@@ -821,6 +827,10 @@ UI.BTN_RESET.addEventListener('click', reset)
 
 // set width of button container
 UI.CONTAINER_CONTROLS.style.width = `${WIDTH}px`
+
+// set width and height
+UI.CANVAS.width = WIDTH
+UI.CANVAS.height = HEIGHT
 
 // start
 setup()
