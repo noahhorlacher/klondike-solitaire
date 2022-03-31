@@ -20,19 +20,19 @@ let animation_stack
 
 // start animating cards
 function start_win_animation() {
-    animation_stack = [...putstacks].map(stack => stack.reverse())
-    for (let x = 0; x < putstacks.length; x++) {
+    animation_stack = [...put_stacks].map(stack => stack.reverse())
+    for (let x = 0; x < put_stacks.length; x++) {
         // get stack
-        let putstack = animation_stack[x]
+        let put_stack = animation_stack[x]
 
-        for (let y = 0; y < putstack.length; y++) {
+        for (let y = 0; y < put_stack.length; y++) {
             // get card
-            let card = putstack[y]
+            let card = put_stack[y]
 
             // initial card position
             card.position = {
-                x: DESIGN.PUTSTACKS[x].POSITION.X,
-                y: DESIGN.PUTSTACKS[x].POSITION.Y
+                x: DESIGN.PUT_STACKS[x].POSITION.X,
+                y: DESIGN.PUT_STACKS[x].POSITION.Y
             }
 
             // random angle, flip randomly
