@@ -363,7 +363,7 @@ async function setup() {
 
     // load card images
     // path prefix for card images
-    const card_images_root = '/cards/'
+    const card_images_root = 'cards/'
 
     // load backside
     card_images.BACK = await load_image(`${card_images_root}2B.svg`)
