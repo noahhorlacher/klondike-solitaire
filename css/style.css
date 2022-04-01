@@ -45,3 +45,117 @@ p {
 	color: white;
 	margin: 0;
 }
+
+#container_loader {
+	position: fixed;
+	top: 0;
+	left: 0;
+	display: block;
+	box-sizing: border-box;
+	opacity: 0;
+	width: 100vw;
+	height: 100vh;
+	background-color: #68ab68ff;
+	transition: opacity 0.5s;
+}
+
+#container_loader.loading {
+	opacity: 1;
+}
+
+.icon {
+	position: fixed;
+	top: calc(50vh - 5vmin);
+	left: calc(50vw - 5vmin);
+	width: 10vmin;
+	height: 10vmin;
+
+	transform: scale(0);
+
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+#clubs {
+	background-image: url('../suits/clubs.svg');
+	animation: clubs 3s ease-in-out 0s infinite;
+}
+#diamonds {
+	background-image: url('../suits/diamonds.svg');
+	animation: diamonds 3s ease-in-out 0s infinite;
+}
+#spades {
+	background-image: url('../suits/spades.svg');
+	animation: spades 3s ease-in-out 0s infinite;
+}
+#hearts {
+	background-image: url('../suits/hearts.svg');
+	animation: hearts 3s ease-in-out 0s infinite;
+}
+
+@keyframes clubs {
+	0% {
+		transform: scale(0);
+	}
+	12.5% {
+		transform: scale(1);
+	}
+	25% {
+		transform: scale(0);
+	}
+	100% {
+		transform: scale(0);
+	}
+}
+
+@keyframes diamonds {
+	0% {
+		transform: scale(0);
+	}
+	25% {
+		transform: scale(0);
+	}
+	37.5% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(0);
+	}
+	100% {
+		transform: scale(0);
+	}
+}
+
+@keyframes spades {
+	0% {
+		transform: scale(0);
+	}
+	50% {
+		transform: scale(0);
+	}
+	62.5% {
+		transform: scale(1);
+	}
+	75% {
+		transform: scale(0);
+	}
+	100% {
+		transform: scale(0);
+	}
+}
+
+@keyframes hearts {
+	0% {
+		transform: scale(0);
+	}
+	75% {
+		transform: scale(0);
+	}
+	87.5% {
+		transform: scale(1);
+	}
+	100% {
+		transform: scale(0);
+	}
+}

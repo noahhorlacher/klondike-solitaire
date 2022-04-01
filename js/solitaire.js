@@ -51,7 +51,9 @@ const UI = {
     BTN_UNDO: document.querySelector('#btn_undo'),
     LABEL_TIMER: document.querySelector('#label_timer'),
     LABEL_MOVES: document.querySelector('#label_moves'),
-    BTN_RESET: document.querySelector('#btn_reset')
+    BTN_RESET: document.querySelector('#btn_reset'),
+    CONTAINER_LOADER: document.querySelector('#container_loader'),
+    LABEL_LOADER: document.querySelector('#label_loader')
 }
 
 // mouse position relative to canvas
@@ -292,6 +294,9 @@ function render_cards() {
 
 // reset the game
 function reset() {
+    // start loading animation
+    start_load_animation()
+
     // reset game variables
     loading = true
     open_pull_stack_cards = 0
@@ -343,9 +348,13 @@ function reset() {
     // open mainstack cards
     for (let i = 0; i < 7; i++) main_stacks[i][i].open = true
 
+    // stop status
     loading = false
 
-    // start rendering
+    // stop loading animation
+    stop_load_animation()
+
+    // render the board once
     render()
 
     // start timer
@@ -355,6 +364,9 @@ function reset() {
 
 // setup the game
 async function setup() {
+    // start load animation
+    start_load_animation()
+
     // set canvas size
     UI.CANVAS.width = WIDTH * SCALE
     UI.CANVAS.height = HEIGHT * SCALE
