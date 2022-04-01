@@ -119,7 +119,7 @@ let started, timer, start_time
 
 // doubleclick variables
 let doubleclick_timer = 0, doubleclick_prevent = false
-const DOUBLECLICK_DELAY = 100
+const DOUBLECLICK_DELAY = 50
 
 // main rendering function
 function render() {
@@ -258,14 +258,14 @@ function render_main_stacks() {
 function render_put_stacks() {
     put_stacks.forEach((putstack, x) => {
         if (putstack.length > 0) {
-            let card = putstack[put_stacks[x].length - 1]
-            if (!drag_stack.includes(card)) {
-                // render topmost card if not in drag_stack
+            let card = putstack[putstack.length - 1]
+            // render topmost card if not in drag_stack
+            if (!drag_stack.includes(card))
                 draw_card(card, DESIGN.PUT_STACKS[x].POSITION.X, DESIGN.PUT_STACKS[x].POSITION.Y)
-            } else if (putstack.length > 1) {
-                // render next card if there is one
+            // else, render next card if there is one
+            else if (putstack.length > 1)
                 draw_card(putstack[put_stacks[x].length - 2], DESIGN.PUT_STACKS[x].POSITION.X, DESIGN.PUT_STACKS[x].POSITION.Y)
-            }
+
             // save card position for drag and drop
             putstack[put_stacks[x].length - 1].position = {
                 x: DESIGN.PUT_STACKS[x].POSITION.X,
@@ -474,8 +474,6 @@ function get_hover_target() {
         let opencard_index = [...pull_stack].findIndex(c => c.open === true)
         let pull_stack_opencard = pull_stack[opencard_index]
 
-        console.log('open card', pull_stack_opencard)
-
         if ('position' in pull_stack_opencard &&
             mouse_over(
                 pull_stack_opencard.position.x,
@@ -579,6 +577,9 @@ function get_hover_target() {
 
 // if started dragging
 function handle_drag_start() {
+    // rerender first
+    render()
+
     // check if a card and which one is being dragged
     let hover_target = get_hover_target()
 
@@ -616,8 +617,6 @@ function handle_drag() {
 function handle_drag_end() {
     let hover_target = get_hover_target()
 
-    console.log('drop', hover_target)
-
     // if dropping on put or main stack and dropping on a different stack than starting stack
     if (
         hover_target.hovered_stack &&
@@ -627,7 +626,6 @@ function handle_drag_end() {
             hover_target.hovered_stack.x != drag_target.x
         )
     ) {
-        console.log('dropping to put_stack or main_stack and different')
         // get drag stack
         let popped_cards = [...drag_stack]
 
@@ -820,6 +818,9 @@ function handle_click() {
 
 // TODO: handle doubleclick in canvas
 function handle_doubleclick() {
+    // for drag check
+    mouse_down = false
+
     let hover_target = get_hover_target()
     if (hover_target.hovered_card) {
         /*
