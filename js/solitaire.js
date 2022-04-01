@@ -322,18 +322,7 @@ function reset() {
     UI.LABEL_MOVES.textContent = `Moves: 0`
 
     // stop/interrupt win animation
-    put_stacks?.forEach(put_stack =>
-        put_stack.forEach(card => {
-            if ('delay' in card) {
-                clearTimeout(card.delay)
-                delete card.delay
-            }
-        }))
-    if (win_animation_interval) {
-        clearInterval(win_animation_interval)
-        win_animation_interval = null
-    }
-    win_animation_stack = []
+    stop_win_animation()
 
     // initialize stacks
     pull_stack = []

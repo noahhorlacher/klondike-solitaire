@@ -17,10 +17,8 @@ const CARD_DELAY = 500
 const BOUNCINESS = .9
 
 // all cards to be animated
-let win_animation_stack = []
-
-// the rerender interval
-let win_animation_interval
+let full_win_animation_stack = []
+let current_win_animation_stack = []
 
 // start animating cards
 function start_win_animation() {
@@ -48,32 +46,31 @@ function start_win_animation() {
                 y: Math.sin(angle) * CARD_SPEED
             }
 
+            full_win_animation_stack.push(card)
+
             // start the card animation after a random delay
-            card.delay = setTimeout(() => win_animation_stack.push(card), CARD_DELAY * (y * 4 + x))
+            card.delay = setTimeout(() => current_win_animation_stack.push(full_win_animation_stack.pop()), CARD_DELAY * (y * 4 + x))
         }
     }
 
     // start rendering
-    win_animation_interval = setInterval(win_animation_render_update, 1000 / FPS)
+    requestAnimationFrame(win_animation_render_update)
 }
 
-async function win_animation_render_update() {
+function win_animation_render_update() {
+    console.log('render')
     // freeze rendering
     CTX.save()
 
     // render all cards
-    for (let card of win_animation_stack) {
-        card_win_animation(card)
-    }
+    for (let card of current_win_animation_stack) card_win_animation(card)
 
     // update rendering
     CTX.restore()
 
-    // stop if no more cards to animate
-    if (win_animation_stack.length == 0) {
-        clearInterval(win_animation_interval)
-        win_animation_interval = null
-    }
+    // continue rendering if there are more cards to be rendered
+    if (current_win_animation_stack.length > 0 || full_win_animation_stack.length > 0)
+        requestAnimationFrame(win_animation_render_update)
 }
 
 // animation of a single card
@@ -97,7 +94,21 @@ function card_win_animation(card) {
 
     // stop rendering if out of view
     if (card.position.x > (WIDTH * SCALE) || card.position.x < -DESIGN.CARD.SIZE.X) {
-        let card_index = win_animation_stack.findIndex(search_card => search_card == card)
-        win_animation_stack.splice(card_index, 1)
+        let card_index = current_win_animation_stack.findIndex(search_card => search_card == card)
+        current_win_animation_stack.splice(card_index, 1)
     }
+}
+
+function stop_win_animation() {
+    // clear timeouts
+    full_win_animation_stack?.forEach(card => {
+        if ('delay' in card) {
+            clearTimeout(card.delay)
+            delete card.delay
+        }
+    })
+
+    // reset animation stacks
+    full_win_animation_stack = []
+    current_win_animation_stack = []
 }
