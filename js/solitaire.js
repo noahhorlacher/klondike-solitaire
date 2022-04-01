@@ -567,7 +567,7 @@ function get_hover_target() {
             hovered_stack = {
                 where: 'pull_stack',
                 x: opencard_index,
-                target_stack: pull_stack[x]
+                target_stack: pull_stack[opencard_index]
             }
         }
     }
