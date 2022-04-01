@@ -21,5 +21,5 @@ function stop_load_animation() {
     UI.CONTAINER_LOADER.classList.remove('loading')
 
     // set display to none after fade out
-    setTimeout(() => UI.CONTAINER_LOADER.style.display = 'none', 500)
+    setTimeout(() => UI.CONTAINER_LOADER.style.display = 'none', 1000)
 }

@@ -359,9 +359,12 @@ function reset() {
     // render the board once
     render()
 
-    // start timer
+    // reset timer
     if (timer) clearInterval(timer)
     UI.LABEL_TIMER.textContent = 'Time: 00:00:00'
+
+    // fade in if not yet faded in
+    if (!UI.CANVAS.classList.contains('loaded')) UI.CANVAS.classList.add('loaded')
 }
 
 // setup the game

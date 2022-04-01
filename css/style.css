@@ -1,23 +1,40 @@
 html,
 body {
 	margin: 0;
-	background-color: hsl(120, 25%, 43%);
+	background-image: linear-gradient(
+		to bottom,
+		hsl(120, 25%, 43%),
+		hsl(140, 25%, 30%)
+	);
 	text-align: center;
 	font-family: sans-serif;
+}
+
+main {
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+	margin: 10px auto;
+	display: inline-block;
 }
 
 #container_canvas {
 	display: inline-block;
 	border: 20px solid #68ab68;
-	border-top-width: 10px;
-	border-bottom-width: 10px;
+	border-top-width: 20px;
+	border-bottom-width: 20px;
 	font-size: 0;
+	border-radius: 0 0 4px 4px;
 }
 
 canvas {
+	opacity: 0;
 	display: inline-block;
 	margin: 0;
 	border: 2px solid #fffb;
+	transition: opacity 1s;
+}
+
+canvas.loaded {
+	opacity: 1;
 }
 
 #container_controls {
@@ -25,8 +42,8 @@ canvas {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin: 7px auto 0 auto;
-	padding: 10px 22px 0px 22px;
+	padding: 22px 22px 0px 22px;
+	border-radius: 4px 4px 0 0;
 	font-size: 1em;
 	font-weight: bold;
 	user-select: none;
@@ -41,6 +58,7 @@ btn {
 	padding: 0.5em 1.2em;
 	cursor: pointer;
 	transition: opacity 0.3s;
+	border-radius: 4px;
 }
 
 btn[disabled='true'] {
@@ -72,7 +90,7 @@ p {
 	width: 100vw;
 	height: 100vh;
 	background-color: #68ab68ff;
-	transition: opacity 0.5s;
+	transition: opacity 1s;
 }
 
 #container_loader.loading {
