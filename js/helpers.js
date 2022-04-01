@@ -4,6 +4,11 @@ Array.prototype.shuffle = function () {
     return this
 }
 
+// get a random element from an array
+function random_element(array) {
+    return array[random_range_i(0, array.length - 1)]
+}
+
 // draw a rectangle with rounded corners
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radius) {
     if (width < 2 * radius) radius = width / 2;

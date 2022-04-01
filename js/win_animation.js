@@ -8,10 +8,13 @@ const CARD_ANGLE_RANGE = {
 const CARD_SPEED = 4 * SCALE
 
 // gravity
-const GRAVITY = 2 * SCALE
+const GRAVITY = 1 * SCALE
 
 // delay until next card starts animating
-const CARD_DELAY = 500
+const CARD_DELAY = {
+    MIN: 500,
+    MAX: 700
+}
 
 // bounciness factor, 0-1
 const BOUNCINESS = .9
@@ -22,43 +25,64 @@ let current_win_animation_stack = []
 
 // start animating cards
 function start_win_animation() {
-    // go through stacks
-    for (let x = 0; x < put_stacks.length; x++) {
-        // get stack
-        let put_stack = [...[...put_stacks][x]]
+    // keep track of how many cards are left
+    let cards_left = 52
 
-        for (let y = 0; y < 13; y++) {
-            // get card
-            let card = put_stack.pop()
+    // copy of put stacks count with
+    let put_stacks_copy = JSON.parse(JSON.stringify(put_stacks))
 
-            // initial card position
-            card.position = {
-                x: DESIGN.PUT_STACKS[x].POSITION.X,
-                y: DESIGN.PUT_STACKS[x].POSITION.Y
-            }
+    // last stack from which was popped from (to prevent popping twice in a row)
+    let last_stack_x
 
-            // random angle, flip randomly
-            let angle = random_range(CARD_ANGLE_RANGE.MIN, CARD_ANGLE_RANGE.MAX) - Math.PI * .5
+    // animate all cards
+    while (cards_left > 0) {
+        // get non-empty put stacks
+        let animatable_stack_indices = []
+        put_stacks_copy.forEach((stack, x) => {
+            if (stack.length > 0 && x != last_stack_x) animatable_stack_indices.push(x)
+        })
 
-            // get velocity vector and flip x randomly
-            card.velocity = {
-                x: Math.cos(angle) * CARD_SPEED * (Math.random() > .5 ? -1 : 1),
-                y: Math.sin(angle) * CARD_SPEED
-            }
+        // get random index
+        let x = last_stack_x = random_element(animatable_stack_indices)
+        let y = put_stacks_copy[x].length - 1
 
-            full_win_animation_stack.push(card)
+        // get card
+        let card = put_stacks_copy[x].pop()
 
-            // start the card animation after a random delay
-            card.delay = setTimeout(() => current_win_animation_stack.push(full_win_animation_stack.pop()), CARD_DELAY * (y * 4 + x))
+        // get card image again
+        card.image = put_stacks[x][put_stacks[x].length - 1 - y].image
+
+        // initial card position
+        card.position = {
+            x: DESIGN.PUT_STACKS[x].POSITION.X,
+            y: DESIGN.PUT_STACKS[x].POSITION.Y
         }
+
+        // random angle, flip randomly
+        let angle = random_range(CARD_ANGLE_RANGE.MIN, CARD_ANGLE_RANGE.MAX) - Math.PI * .5
+
+        // get velocity vector and flip x randomly
+        card.velocity = {
+            x: Math.cos(angle) * CARD_SPEED * (Math.random() > .5 ? -1 : 1),
+            y: Math.sin(angle) * CARD_SPEED
+        }
+
+        // push to track keeping stack
+        full_win_animation_stack.push(card)
+
+        // start the card animation after a random delay
+        card.delay = setTimeout(() => current_win_animation_stack.push(full_win_animation_stack.pop()), random_range_i(CARD_DELAY.MIN, CARD_DELAY.MAX) * (y * 4 + x))
+
+        // decrement cards left
+        cards_left--
     }
 
     // start rendering
     requestAnimationFrame(win_animation_render_update)
 }
 
+// render the cards
 function win_animation_render_update() {
-    console.log('render')
     // freeze rendering
     CTX.save()
 
@@ -99,6 +123,7 @@ function card_win_animation(card) {
     }
 }
 
+// stop/interrupt the win animation
 function stop_win_animation() {
     // clear timeouts
     full_win_animation_stack?.forEach(card => {
