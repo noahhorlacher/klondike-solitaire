@@ -466,12 +466,13 @@ function get_hover_target() {
     ) {
         let opencard_index = [...pull_stack].findIndex(c => c.open === true)
         let pull_stack_opencard = pull_stack[opencard_index]
-        if (mouse_over(
-            pull_stack_opencard.position.x,
-            pull_stack_opencard.position.y,
-            DESIGN.CARD.SIZE.X,
-            DESIGN.CARD.SIZE.Y
-        )) {
+        if ('position' in pull_stack_opencard &&
+            mouse_over(
+                pull_stack_opencard.position.x,
+                pull_stack_opencard.position.y,
+                DESIGN.CARD.SIZE.X,
+                DESIGN.CARD.SIZE.Y
+            )) {
             hovered_card = pull_stack_opencard
             hovered_stack = {
                 where: 'pull_stack',
@@ -587,8 +588,6 @@ function handle_drag() {
 // if stopped dragging
 function handle_drag_end() {
     let hover_target = get_hover_target()
-
-    console.log(hover_target)
 
     // if dropping on put or main stack and dropping on a different stack than starting stack
     if (
