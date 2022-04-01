@@ -16,7 +16,7 @@ canvas {
 	justify-content: space-between;
 	align-items: center;
 	margin: 7px auto 10px auto;
-	font-size: 1.2em;
+	font-size: 1em;
 	font-weight: bold;
 	user-select: none;
 }
