@@ -108,6 +108,9 @@ let drag_position = {
 // flag if game is loading to skip rendering
 let loading = true
 
+// render flag, only rerender if true
+let renderable = false
+
 // for undo functionality
 let last_action
 
@@ -125,6 +128,8 @@ function render() {
 
     // render cards
     render_cards()
+
+    renderable = false
 }
 
 // render the background and outlines
@@ -384,6 +389,7 @@ async function setup() {
             })
 
     // start
+    check_render_flag()
     reset()
 }
 
@@ -453,6 +459,7 @@ function solve() {
 
 // check which card and stack is being hovered
 function get_hover_target() {
+    // update positions
     render()
 
     let hovered_card = null
@@ -466,6 +473,9 @@ function get_hover_target() {
     ) {
         let opencard_index = [...pull_stack].findIndex(c => c.open === true)
         let pull_stack_opencard = pull_stack[opencard_index]
+
+        console.log('open card', pull_stack_opencard)
+
         if ('position' in pull_stack_opencard &&
             mouse_over(
                 pull_stack_opencard.position.x,
@@ -477,6 +487,30 @@ function get_hover_target() {
             hovered_stack = {
                 where: 'pull_stack',
                 x: opencard_index
+            }
+        }
+    }
+
+    // go through put_stacks to check for drag (uppermost one counts)
+    if (
+        !hovered_card &&
+        mouse_position.y < DESIGN.MAIN_STACKS[0].POSITION.Y &&
+        mouse_position.x >= DESIGN.PUT_STACKS[3].POSITION.X
+    ) {
+        for (let x = 0; x < put_stacks.length; x++) {
+            // if base is hovered
+            if (mouse_over(
+                DESIGN.PUT_STACKS[x].POSITION.X,
+                DESIGN.PUT_STACKS[x].POSITION.Y,
+                DESIGN.CARD.SIZE.X,
+                DESIGN.CARD.SIZE.Y
+            )) {
+                hovered_stack = {
+                    where: 'put_stack',
+                    x: x
+                }
+                hovered_card = put_stacks[x][put_stacks[x].length - 1]
+                break
             }
         }
     }
@@ -516,30 +550,23 @@ function get_hover_target() {
 
                 // break if found
                 if (hovered_card) break
-            }
-        }
-    }
-
-    // go through put_stacks to check for drag (uppermost one counts)
-    if (
-        !hovered_card &&
-        mouse_position.y < DESIGN.MAIN_STACKS[0].POSITION.Y &&
-        mouse_position.x >= DESIGN.PUT_STACKS[3].POSITION.X
-    ) {
-        for (let x = 0; x < put_stacks.length; x++) {
-            // if base is hovered
-            if (mouse_over(
-                DESIGN.PUT_STACKS[x].POSITION.X,
-                DESIGN.PUT_STACKS[x].POSITION.Y,
-                DESIGN.CARD.SIZE.X,
-                DESIGN.CARD.SIZE.Y
-            )) {
-                hovered_stack = {
-                    where: 'put_stack',
-                    x: x
+            } else {
+                // if stack is empty, check if stack is hovered
+                if (
+                    mouse_over(
+                        DESIGN.MAIN_STACKS[x].POSITION.X,
+                        DESIGN.MAIN_STACKS[x].POSITION.Y,
+                        DESIGN.CARD.SIZE.X,
+                        DESIGN.CARD.SIZE.Y
+                    )
+                ) {
+                    hovered_stack = {
+                        where: 'main_stack',
+                        x: x,
+                        y: 0
+                    }
+                    break
                 }
-                hovered_card = put_stacks[x][put_stacks[x].length - 1]
-                break
             }
         }
     }
@@ -582,12 +609,14 @@ function handle_drag_start() {
 
 // while dragging
 function handle_drag() {
-    render()
+    if (renderable) render()
 }
 
 // if stopped dragging
 function handle_drag_end() {
     let hover_target = get_hover_target()
+
+    console.log('drop', hover_target)
 
     // if dropping on put or main stack and dropping on a different stack than starting stack
     if (
@@ -598,6 +627,7 @@ function handle_drag_end() {
             hover_target.hovered_stack.x != drag_target.x
         )
     ) {
+        console.log('dropping to put_stack or main_stack and different')
         // get drag stack
         let popped_cards = [...drag_stack]
 
@@ -796,6 +826,12 @@ function handle_doubleclick() {
             TODO: IMPLEMENT AUTOMATIC CARD PLACING ON DOUBLECLICK
         */
     }
+}
+
+// set render flag to true every 60 frames
+function check_render_flag() {
+    renderable = true
+    requestAnimationFrame(check_render_flag)
 }
 
 // update mouse position and check for drag
