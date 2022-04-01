@@ -44,10 +44,13 @@ function start_win_animation() {
 
         // get random index
         let x = last_stack_x = random_element(animatable_stack_indices)
+        console.log(x)
         let y = put_stacks_copy[x].length - 1
 
         // get card
         let card = put_stacks_copy[x].pop()
+
+        console.log(card)
 
         // get card image again
         card.image = put_stacks[x][put_stacks[x].length - 1 - y].image
@@ -71,7 +74,10 @@ function start_win_animation() {
         full_win_animation_stack.push(card)
 
         // start the card animation after a random delay
-        card.delay = setTimeout(() => current_win_animation_stack.push(full_win_animation_stack.pop()), random_range_i(CARD_DELAY.MIN, CARD_DELAY.MAX) * (y * 4 + x))
+        card.delay = setTimeout(() => {
+            let animation_stack_index = full_win_animation_stack.findIndex(animation_card => animation_card == card)
+            current_win_animation_stack.push(full_win_animation_stack.splice(animation_stack_index, 1)[0])
+        }, random_range_i(CARD_DELAY.MIN, CARD_DELAY.MAX) * (y * 4 + x))
 
         // decrement cards left
         cards_left--
