@@ -108,9 +108,6 @@ let drag_position = {
 // flag if game is loading to skip rendering
 let loading = true
 
-// render flag, only rerender if true
-let renderable = false
-
 // for undo functionality
 let last_action
 
@@ -128,8 +125,6 @@ function render() {
 
     // render cards
     render_cards()
-
-    renderable = false
 }
 
 // render the background and outlines
@@ -389,7 +384,6 @@ async function setup() {
             })
 
     // start
-    check_render_flag()
     reset()
 }
 
@@ -610,7 +604,7 @@ function handle_drag_start() {
 
 // while dragging
 function handle_drag() {
-    if (renderable) render()
+    render()
 }
 
 // if stopped dragging
@@ -827,12 +821,6 @@ function handle_doubleclick() {
             TODO: IMPLEMENT AUTOMATIC CARD PLACING ON DOUBLECLICK
         */
     }
-}
-
-// set render flag to true every 60 frames
-function check_render_flag() {
-    renderable = true
-    requestAnimationFrame(check_render_flag)
 }
 
 // update mouse position and check for drag
