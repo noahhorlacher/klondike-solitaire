@@ -526,22 +526,19 @@ function get_hover_target() {
         mouse_position.x >= DESIGN.PUT_STACKS[3].POSITION.X
     ) {
         for (let x = 0; x < put_stacks.length; x++) {
-            // if stack has cards
-            if (put_stacks[x].length > 0) {
-                // if base is hovered
-                if (mouse_over(
-                    DESIGN.PUT_STACKS[x].POSITION.X,
-                    DESIGN.PUT_STACKS[x].POSITION.Y,
-                    DESIGN.CARD.SIZE.X,
-                    DESIGN.CARD.SIZE.Y
-                )) {
-                    hovered_stack = {
-                        where: 'put_stack',
-                        x: x
-                    }
-                    hovered_card = put_stacks[x][put_stacks[x].length - 1]
-                    break
+            // if base is hovered
+            if (mouse_over(
+                DESIGN.PUT_STACKS[x].POSITION.X,
+                DESIGN.PUT_STACKS[x].POSITION.Y,
+                DESIGN.CARD.SIZE.X,
+                DESIGN.CARD.SIZE.Y
+            )) {
+                hovered_stack = {
+                    where: 'put_stack',
+                    x: x
                 }
+                hovered_card = put_stacks[x][put_stacks[x].length - 1]
+                break
             }
         }
     }
@@ -563,15 +560,16 @@ function handle_drag_start() {
         drag_target = hover_target.hovered_stack
 
         // if a card from main_stacks is dragged, check if there are cards on top
-        if (main_stacks.some(s => s.includes([hover_target.hovered_card]))) {
-            // get stack index
-            let i = main_stacks.findIndex(s => s.includes([hover_target.hovered_card]))
+        if (hover_target.hovered_stack.where == 'main_stack') {
+            // get hovered stack
+            let hovered_stack = main_stacks[hover_target.hovered_stack.x]
 
             // if not last card of stack
-            if (hover_target.hovered_card != [...main_stacks[i]].reverse()[0]) {
-                // get card index
-                let j = main_stacks[i].findIndex(c => c == [hover_target.hovered_card])
-                drag_stack = [...main_stacks[i]].splice(j)
+            if (hover_target.hovered_stack.y < hovered_stack.length - 1) {
+                // set the drag stack to all cards starting from dragged card
+                drag_stack = [...hovered_stack].splice(hover_target.hovered_stack.y)
+            } else {
+                drag_stack = [hover_target.hovered_card]
             }
         } else drag_stack = [hover_target.hovered_card]
 
@@ -590,15 +588,18 @@ function handle_drag() {
 function handle_drag_end() {
     let hover_target = get_hover_target()
 
+    console.log(hover_target)
+
     // if dropping on put or main stack and dropping on a different stack than starting stack
     if (
         hover_target.hovered_stack &&
-        ['put_stacks', 'main_stacks'].includes(hover_target.hovered_stack.where) &&
+        ['put_stack', 'main_stack'].includes(hover_target.hovered_stack.where) &&
         (
             hover_target.hovered_stack.where != drag_target.where ||
             hover_target.hovered_stack.x != drag_target.x
         )
     ) {
+        // get drag stack
         let popped_cards = [...drag_stack]
 
         // check if move is valid
