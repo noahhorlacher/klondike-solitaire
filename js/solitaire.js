@@ -822,7 +822,6 @@ function check_gameover() {
 function check_for_match(drop_target, drop_card) {
     if (!drop_card || !drop_target) return false
     else if (drop_target.where == 'put_stack') {
-        console.log('target stack', drop_target.target_stack)
         let target_stack = drop_target.target_stack
         // can't drop card on already full putstack
         if (target_stack.length == 13) return false
