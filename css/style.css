@@ -89,7 +89,6 @@ p {
 	opacity: 0;
 	width: 100vw;
 	height: 100vh;
-	background-color: #68ab68ff;
 	transition: opacity 1s;
 }
 
