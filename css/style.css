@@ -6,16 +6,27 @@ body {
 	font-family: sans-serif;
 }
 
+#container_canvas {
+	display: inline-block;
+	border: 20px solid #68ab68;
+	border-top-width: 10px;
+	border-bottom-width: 10px;
+	font-size: 0;
+}
+
 canvas {
-	display: block;
-	margin: auto;
+	display: inline-block;
+	margin: 0;
+	border: 2px solid #fffb;
 }
 
 #container_controls {
+	background-color: #68ab68;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin: 7px auto 10px auto;
+	margin: 7px auto 0 auto;
+	padding: 10px 22px 0px 22px;
 	font-size: 1em;
 	font-weight: bold;
 	user-select: none;
