@@ -41,6 +41,11 @@ btn:not([disabled='true']):hover {
 	background-color: hsl(300, 25%, 60%);
 }
 
+#btn_undo,
+#btn_finish {
+	justify-self: flex-start;
+}
+
 p {
 	color: white;
 	margin: 0;

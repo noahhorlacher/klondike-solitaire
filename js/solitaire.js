@@ -49,6 +49,7 @@ const UI = {
     CANVAS: document.querySelector('canvas'),
     CONTAINER_CONTROLS: document.querySelector('#container_controls'),
     BTN_UNDO: document.querySelector('#btn_undo'),
+    BTN_FINISH: document.querySelector('#btn_finish'),
     LABEL_TIMER: document.querySelector('#label_timer'),
     LABEL_MOVES: document.querySelector('#label_moves'),
     BTN_RESET: document.querySelector('#btn_reset'),
@@ -67,7 +68,7 @@ const CTX = UI.CANVAS.getContext('2d')
 
 // card properties
 const CARD_VALUES = 'A23456789TJQK'.split('')
-const CARD_COLORS = 'HDCS'.split('')
+const CARD_COLORS = 'CDSH'.split('')
 const CARD_COLOR_MATCH = {
     H: ['S', 'C'],
     D: ['S', 'C'],
@@ -255,16 +256,16 @@ function render_main_stacks() {
 function render_put_stacks() {
     put_stacks.forEach((putstack, x) => {
         if (putstack.length > 0) {
-            let card = putstack[putstack.length - 1]
+            let card = putstack.at(-1)
             // render topmost card if not in drag_stack
             if (!drag_stack.includes(card))
                 draw_card(card, DESIGN.PUT_STACKS[x].POSITION.X, DESIGN.PUT_STACKS[x].POSITION.Y)
             // else, render next card if there is one
             else if (putstack.length > 1)
-                draw_card(putstack[put_stacks[x].length - 2], DESIGN.PUT_STACKS[x].POSITION.X, DESIGN.PUT_STACKS[x].POSITION.Y)
+                draw_card(putstack.at(-2), DESIGN.PUT_STACKS[x].POSITION.X, DESIGN.PUT_STACKS[x].POSITION.Y)
 
             // save card position for drag and drop
-            putstack[put_stacks[x].length - 1].position = {
+            putstack.at(-1).position = {
                 x: DESIGN.PUT_STACKS[x].POSITION.X,
                 y: DESIGN.PUT_STACKS[x].POSITION.Y
             }
@@ -294,6 +295,9 @@ function render_cards() {
 
 // reset the game
 function reset() {
+    // stop/interrupt the finish animation
+    stop_finish_animation()
+
     // start loading animation
     start_load_animation()
 
@@ -310,6 +314,9 @@ function reset() {
 
     // disable undo button
     UI.BTN_UNDO.setAttribute('disabled', true)
+
+    // disable finish button
+    UI.BTN_FINISH.setAttribute('disabled', true)
 
     // reset move display
     UI.LABEL_MOVES.textContent = `Moves: 0`
@@ -407,7 +414,7 @@ function undo() {
     if (last_action.action == 'drop') {
         // if dropped a card or stack of cards
         // if card was opened in last action, close again
-        if (last_action.opened_card) main_stacks[last_action.drag_target.x][main_stacks[last_action.drag_target.x].length - 1].open = false
+        if (last_action.opened_card) main_stacks[last_action.drag_target.x].at(-1).open = false
 
         // remove dropped cards
         if (last_action.drop_target.where == 'main_stack') {
@@ -447,7 +454,7 @@ function undo() {
     render()
 }
 
-// solve and end the game (for testing)
+// solve and end the game (for testing win animation)
 function solve() {
     // empty all stacks
     main_stacks = [[], [], [], [], [], [], []]
@@ -470,7 +477,7 @@ function solve() {
     start_win_animation()
 }
 
-// one step before solve (for testing)
+// one step before solve (for testing win animation)
 function almost_solve() {
     // empty all stacks
     main_stacks = [[], [], [], [], [], [], []]
@@ -491,6 +498,45 @@ function almost_solve() {
 
     // refresh
     render()
+}
+
+// one step before finish (for testing finish animation)
+function before_finish() {
+    // empty all stacks
+    main_stacks = [[], [], [], [], [], [], []]
+    pull_stack = []
+    put_stacks = [[], [], [], []]
+
+    // copy all cards
+    let cards = [...initial_card_states]
+
+    // put cards into main stacks in order
+    for (let x = 0; x < 4; x++) {
+        for (let y = 0; y < 13; y++) {
+            // get current value
+            let current_value = [...CARD_VALUES].reverse()[y]
+            // get current color, alternating red and black
+            let current_color = CARD_COLORS[x + (y % 2)]
+
+            // find matching card
+            let splice_index = cards.findIndex(card => card.value == current_value && card.color == current_color)
+
+            // remove card
+            let card = cards.splice(splice_index, 1)[0]
+
+            // open card
+            card.open = true
+
+            // remove matching card and insert
+            main_stacks[x].push(card)
+        }
+    }
+
+    // refresh
+    render()
+
+    // check for gameover to enable finish button
+    check_gameover()
 }
 
 // check which card and stack is being hovered
@@ -520,7 +566,8 @@ function get_hover_target() {
             hovered_card = pull_stack_opencard
             hovered_stack = {
                 where: 'pull_stack',
-                x: opencard_index
+                x: opencard_index,
+                target_stack: pull_stacks[x]
             }
         }
     }
@@ -541,9 +588,10 @@ function get_hover_target() {
             )) {
                 hovered_stack = {
                     where: 'put_stack',
-                    x: x
+                    x: x,
+                    target_stack: put_stacks[x]
                 }
-                hovered_card = put_stacks[x][put_stacks[x].length - 1]
+                hovered_card = put_stacks[x].at(-1)
                 break
             }
         }
@@ -575,7 +623,8 @@ function get_hover_target() {
                         hovered_stack = {
                             where: 'main_stack',
                             x: x,
-                            y: y
+                            y: y,
+                            target_stack: main_stacks[x]
                         }
                         hovered_card = card
                         break
@@ -597,7 +646,8 @@ function get_hover_target() {
                     hovered_stack = {
                         where: 'main_stack',
                         x: x,
-                        y: 0
+                        y: 0,
+                        target_stack: main_stacks[x]
                     }
                     break
                 }
@@ -703,7 +753,7 @@ function handle_drag_end() {
                 main_stacks[drag_target.x].splice(drag_target.y)
                 // open uppermost card of drag target if it has one left
                 if (main_stacks[drag_target.x].length > 0) {
-                    main_stacks[drag_target.x][main_stacks[drag_target.x].length - 1].open = true
+                    main_stacks[drag_target.x].at(-1).open = true
                     last_action.opened_card = true
                 }
             } else if (drag_target.where == 'put_stack') {
@@ -738,10 +788,17 @@ function handle_drag_end() {
     render()
 }
 
+/* check if game is in a state where only the remaining main stacks cards
+ would have to be dragged to put stacks in order to finish it */
+function game_finishable() {
+    // finishable if no pull stack cards left and all main stack cards are open
+    return pull_stack.length == 0 && !main_stacks.some(stack => stack.some(card => card.open == false))
+}
+
 // check if won or game is unsolvable
 function check_gameover() {
     if (!put_stacks.some(stack => stack.length != 13)) {
-        // game won
+        // game won if put stacks all contain 13 cards
         gameover = true
 
         // disable undo button
@@ -753,15 +810,20 @@ function check_gameover() {
         // trigger rerender so card falls in place first
         render()
 
-        // start the animation
+        // start the win animation
         start_win_animation()
+    } else if (game_finishable()) {
+        // enable finish button if game finishable
+        UI.BTN_FINISH.setAttribute('disabled', false)
     }
 }
 
 // check if a card can be dropped on a target
 function check_for_match(drop_target, drop_card) {
-    if (drop_target.where == 'put_stack') {
-        let target_stack = put_stacks[drop_target.x]
+    if (!drop_card || !drop_target) return false
+    else if (drop_target.where == 'put_stack') {
+        console.log('target stack', drop_target.target_stack)
+        let target_stack = drop_target.target_stack
         // can't drop card on already full putstack
         if (target_stack.length == 13) return false
         // can only drop single card on putstack
@@ -769,17 +831,17 @@ function check_for_match(drop_target, drop_card) {
         // if putstack empty, only ace drop is allowed
         if (target_stack.length == 0) return drop_card.value == 'A'
         // drop only same color and value one higher on non-empty putstack
-        let top_card = target_stack[target_stack.length - 1]
+        let top_card = target_stack.at(-1)
         if (
             top_card.color == drop_card.color &&
             CARD_VALUES.indexOf(top_card.value) == CARD_VALUES.indexOf(drop_card.value) - 1
         ) return true
     } else if (drop_target.where == 'main_stack') {
-        let target_stack = main_stacks[drop_target.x]
+        let target_stack = drop_target.target_stack
         // if mainstack empty, only king drop is allowed
         if (target_stack.length == 0) return drop_card.value == 'K'
         // drop only opposite color and value one lower on non-empty mainstack
-        let top_card = target_stack[target_stack.length - 1]
+        let top_card = target_stack.at(-1)
         if (
             CARD_COLOR_MATCH[top_card.color].includes(drop_card.color) &&
             CARD_VALUES.indexOf(top_card.value) == CARD_VALUES.indexOf(drop_card.value) + 1
@@ -872,7 +934,7 @@ function place_card(hover_target) {
             let opened_card = false
             if (main_stack.length > 0) {
                 opened_card = true
-                main_stack[main_stack.length - 1].open = true
+                main_stack.at(-1).open = true
             }
 
             // save action
@@ -909,7 +971,7 @@ function place_card(hover_target) {
             // go through put stacks to find a match
             for (let x = 0; x < put_stacks.length; x++) {
                 // if matches
-                if (check_for_match({ where: 'put_stack', x: x }, hover_target.hovered_card)) {
+                if (check_for_match({ where: 'put_stack', target_stack: put_stacks[x] }, hover_target.hovered_card)) {
                     // set target stack
                     target_stack = {
                         where: 'put_stack',
@@ -922,7 +984,7 @@ function place_card(hover_target) {
             // go through main stacks to find a match
             if (!target_stack) {
                 for (let x = 0; x < main_stacks.length; x++) {
-                    if (check_for_match({ where: 'main_stack', x: x }, hover_target.hovered_card)) {
+                    if (check_for_match({ where: 'main_stack', target_stack: main_stacks[x] }, hover_target.hovered_card)) {
                         // set target stack
                         target_stack = {
                             where: 'main_stack',
@@ -946,7 +1008,7 @@ function place_card(hover_target) {
 
                 // reveal uppermost card if has any
                 let opened_card = false
-                if (main_stack.length > 0) main_stack[main_stack.length - 1].open = opened_card = true
+                if (main_stack.length > 0) main_stack.at(-1).open = opened_card = true
 
                 if (target_stack.where == 'put_stack')
                     // save action
@@ -1003,7 +1065,7 @@ function place_card(hover_target) {
             free_put_stack.push(...popped_cards)
 
             // open card
-            free_put_stack[free_put_stack.length - 1].open = true
+            free_put_stack.at(-1).open = true
 
             // save action
             last_action = {
@@ -1043,7 +1105,7 @@ function place_card(hover_target) {
             // go through put stacks to find a match
             for (let x = 0; x < put_stacks.length; x++) {
                 // if matches
-                if (check_for_match({ where: 'put_stack', x: x }, hover_target.hovered_card)) {
+                if (check_for_match({ where: 'put_stack', target_stack: put_stacks[x] }, hover_target.hovered_card)) {
                     // set target stack
                     target_stack = {
                         where: 'put_stack',
@@ -1056,7 +1118,7 @@ function place_card(hover_target) {
             // go through main stacks to find a match
             if (!target_stack) {
                 for (let x = 0; x < main_stacks.length; x++) {
-                    if (check_for_match({ where: 'main_stack', x: x }, hover_target.hovered_card)) {
+                    if (check_for_match({ where: 'main_stack', target_stack: main_stacks[x] }, hover_target.hovered_card)) {
                         // set target stack
                         target_stack = {
                             where: 'main_stack',
@@ -1129,7 +1191,7 @@ function place_card(hover_target) {
 
         // go through main stacks to find a match
         for (let x = 0; x < main_stacks.length; x++) {
-            if (check_for_match({ where: 'main_stack', x: x }, hover_target.hovered_card)) {
+            if (check_for_match({ where: 'main_stack', target_stack: main_stacks[x] }, hover_target.hovered_card)) {
                 // set target stack
                 target_stack = {
                     where: 'main_stack',
@@ -1193,6 +1255,18 @@ function handle_doubleclick() {
     if (hover_target.hovered_card?.open) place_card(hover_target)
 }
 
+// start animation for putting remaining cards on putstack
+function finish() {
+    // set gameover flag to disable interaction
+    gameover = true
+
+    // disable undo button
+    UI.BTN_UNDO.setAttribute('disabled', true)
+
+    // start the animation
+    start_finish_animation()
+}
+
 // update mouse position and check for drag
 document.addEventListener('mousemove', e => {
     if (loading || gameover) return // skip if loading or game over
@@ -1236,6 +1310,9 @@ UI.CANVAS.addEventListener('mouseup', e => {
 // button actions
 UI.BTN_UNDO.addEventListener('click', () => {
     if (UI.BTN_UNDO.getAttribute('disabled') == 'false') undo()
+})
+UI.BTN_FINISH.addEventListener('click', () => {
+    if (UI.BTN_FINISH.getAttribute('disabled') == 'false' && game_finishable()) finish()
 })
 UI.BTN_RESET.addEventListener('click', reset)
 

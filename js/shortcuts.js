@@ -7,6 +7,9 @@ let shortcuts = {
     ' ': e => {
         e.preventDefault()
         pull_card()
+    },
+    'F': f => {
+        if (game_finishable()) finish()
     }
 }
 
