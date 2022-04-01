@@ -31,6 +31,8 @@ function start_win_animation() {
     // copy of put stacks count with
     let put_stacks_copy = JSON.parse(JSON.stringify(put_stacks))
 
+    console.log('put stacks copy', put_stacks_copy)
+
     // last stack from which was popped from (to prevent popping twice in a row)
     let last_stack_x
 
@@ -43,14 +45,14 @@ function start_win_animation() {
         })
 
         // get random index
-        let x = last_stack_x = random_element(animatable_stack_indices)
-        console.log(x)
+        // if none animatable, fall back to last_stack_x
+        let x = random_element(animatable_stack_indices)
+        if (x === undefined) x = last_stack_x
+
         let y = put_stacks_copy[x].length - 1
 
         // get card
         let card = put_stacks_copy[x].pop()
-
-        console.log(card)
 
         // get card image again
         card.image = put_stacks[x][put_stacks[x].length - 1 - y].image
