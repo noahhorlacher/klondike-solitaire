@@ -16,7 +16,11 @@ const CARD_DELAY = 500
 // bounciness factor, 0-1
 const BOUNCINESS = .9
 
-let animation_stack
+// all cards to be animated
+let win_animation_stack = []
+
+// the rerender interval
+let win_animation_interval
 
 // start animating cards
 function start_win_animation() {
@@ -45,8 +49,30 @@ function start_win_animation() {
             }
 
             // start the card animation after a random delay
-            card.delay = setTimeout(() => card.interval = setInterval(() => card_win_animation(card), 1000 / FPS), CARD_DELAY * (y * 4 + x))
+            card.delay = setTimeout(() => win_animation_stack.push(card), CARD_DELAY * (y * 4 + x))
         }
+    }
+
+    // start rendering
+    win_animation_interval = setInterval(win_animation_render_update, 1000 / FPS)
+}
+
+async function win_animation_render_update() {
+    // freeze rendering
+    CTX.save()
+
+    // render all cards
+    for (let card of win_animation_stack) {
+        card_win_animation(card)
+    }
+
+    // update rendering
+    CTX.restore()
+
+    // stop if no more cards to animate
+    if (win_animation_stack.length == 0) {
+        clearInterval(win_animation_interval)
+        win_animation_interval = null
     }
 }
 
@@ -71,7 +97,7 @@ function card_win_animation(card) {
 
     // stop rendering if out of view
     if (card.position.x > (WIDTH * SCALE) || card.position.x < -DESIGN.CARD.SIZE.X) {
-        clearInterval(card.interval)
-        delete card.interval
+        let card_index = win_animation_stack.findIndex(search_card => search_card == card)
+        win_animation_stack.splice(card_index, 1)
     }
 }

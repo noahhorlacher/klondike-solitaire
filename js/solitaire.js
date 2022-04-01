@@ -321,13 +321,19 @@ function reset() {
     // reset move display
     UI.LABEL_MOVES.textContent = `Moves: 0`
 
-    // stop win animation (if it's playing)
-    if (animation_stack) animation_stack.forEach(stack => stack.forEach(card => {
-        if ('interval' in card) clearInterval(card.interval)
-        if ('delay' in card) clearTimeout(card.delay)
-    })
-    )
-    animation_stack = null
+    // stop/interrupt win animation
+    put_stacks?.forEach(put_stack =>
+        put_stack.forEach(card => {
+            if ('delay' in card) {
+                clearTimeout(card.delay)
+                delete card.delay
+            }
+        }))
+    if (win_animation_interval) {
+        clearInterval(win_animation_interval)
+        win_animation_interval = null
+    }
+    win_animation_stack = []
 
     // initialize stacks
     pull_stack = []
@@ -1246,6 +1252,8 @@ function place_card(hover_target) {
 function handle_doubleclick() {
     // for drag check
     mouse_down = false
+
+    if (loading || gameover) return // skip if loading or game over
 
     // get hovered card
     let hover_target = get_hover_target()
