@@ -116,7 +116,7 @@ let started, timer, start_time
 
 // doubleclick variables
 let doubleclick_timer = 0, doubleclick_prevent = false
-const DOUBLECLICK_DELAY = 50
+const DOUBLECLICK_DELAY = 100
 
 // main rendering function
 function render() {
@@ -840,17 +840,345 @@ function handle_click() {
     ) pull_card()
 }
 
-// TODO: handle doubleclick in canvas
+// place a card on available stack
+function place_card(hover_target) {
+    if (hover_target.hovered_stack.where == 'main_stack') {
+        // if main stack double clicked
+        if (hover_target.hovered_card.value == 'A') {
+            // stack to pull card from
+            let main_stack = main_stacks[hover_target.hovered_stack.x]
+
+            // find free put stack
+            let free_put_stack_index = [...put_stacks].findIndex(stack => stack.length == 0)
+            let free_put_stack = put_stacks[free_put_stack_index]
+
+            // remove card and put into put stacks
+            let popped_card = main_stack.pop()
+            free_put_stack.push(popped_card)
+
+            // reveal uppermost card of main stack if has any
+            let opened_card = false
+            if (main_stack.length > 0) {
+                opened_card = true
+                main_stack[main_stack.length - 1].open = true
+            }
+
+            // save action
+            last_action = {
+                action: 'drop',
+                drag_target: hover_target.hovered_stack,
+                drop_target: {
+                    where: 'put_stack',
+                    x: free_put_stack_index,
+                    y: free_put_stack.length - 1
+                },
+                popped_cards: [popped_card],
+                opened_card: opened_card,
+                last_action: last_action
+            }
+
+            // enable undo button
+            UI.BTN_UNDO.setAttribute('disabled', false)
+
+            // increment move count and update move display
+            UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+            // start timer
+            if (!started) start_timer()
+
+            render()
+
+            // check if won/lost
+            check_gameover()
+        } else {
+            // place the card on a matching stack
+            let target_stack
+
+            // go through put stacks to find a match
+            for (let x = 0; x < put_stacks.length; x++) {
+                // if matches
+                if (check_for_match({ where: 'put_stack', x: x }, hover_target.hovered_card)) {
+                    // set target stack
+                    target_stack = {
+                        where: 'put_stack',
+                        x: x
+                    }
+                    break
+                }
+            }
+
+            // go through main stacks to find a match
+            if (!target_stack) {
+                for (let x = 0; x < main_stacks.length; x++) {
+                    if (check_for_match({ where: 'main_stack', x: x }, hover_target.hovered_card)) {
+                        // set target stack
+                        target_stack = {
+                            where: 'main_stack',
+                            x: x
+                        }
+                        break
+                    }
+                }
+            }
+
+            if (target_stack) {
+                // stack to pull card from
+                let main_stack = main_stacks[hover_target.hovered_stack.x]
+
+                // the card
+                let popped_cards = main_stack.splice(hover_target.hovered_stack.y)
+
+                // remove card and push to desired stack
+                if (target_stack.where == 'put_stack') put_stacks[target_stack.x].push(...popped_cards)
+                else if (target_stack.where == 'main_stack') main_stacks[target_stack.x].push(...popped_cards)
+
+                // reveal uppermost card if has any
+                let opened_card = false
+                if (main_stack.length > 0) main_stack[main_stack.length - 1].open = opened_card = true
+
+                if (target_stack.where == 'put_stack')
+                    // save action
+                    last_action = {
+                        action: 'drop',
+                        drag_target: hover_target.hovered_stack,
+                        drop_target: {
+                            where: 'put_stack',
+                            x: target_stack.x,
+                            y: put_stacks[target_stack.x].length - 1
+                        },
+                        popped_cards: popped_cards,
+                        opened_card: opened_card,
+                        last_action: last_action
+                    }
+                else if (target_stack.where == 'main_stack') last_action = {
+                    action: 'drop',
+                    drag_target: hover_target.hovered_stack,
+                    drop_target: {
+                        where: 'main_stack',
+                        x: target_stack.x,
+                        y: main_stacks[target_stack.x].length - 1
+                    },
+                    popped_cards: popped_cards,
+                    opened_card: opened_card,
+                    last_action: last_action
+                }
+
+                // enable undo button
+                UI.BTN_UNDO.setAttribute('disabled', false)
+
+                // increment move count and update move display
+                UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+                // start timer
+                if (!started) start_timer()
+
+                // rerender
+                render()
+
+                // check if won/lost
+                check_gameover()
+            }
+        }
+    } else if (hover_target.hovered_stack.where == 'pull_stack') {
+        // if pull stack double clicked
+        if (hover_target.hovered_card.value == 'A') {
+            // find free put stack
+            let free_put_stack_index = [...put_stacks].findIndex(stack => stack.length == 0)
+            let free_put_stack = put_stacks[free_put_stack_index]
+
+            // remove card from pull_stack and put into free put_stack
+            let popped_cards = pull_stack.splice(hover_target.hovered_stack.x, 1)
+            free_put_stack.push(...popped_cards)
+
+            // open card
+            free_put_stack[free_put_stack.length - 1].open = true
+
+            // save action
+            last_action = {
+                action: 'drop',
+                drag_target: hover_target.hovered_stack,
+                drop_target: {
+                    where: 'put_stack',
+                    x: free_put_stack_index,
+                    y: free_put_stack.length - 1
+                },
+                popped_cards: popped_cards,
+                opened_card: false,
+                old_open_pull_stack_cards: open_pull_stack_cards,
+                last_action: last_action
+            }
+
+            // decrement open pull_stack cards amount
+            open_pull_stack_cards--
+
+            // enable undo button
+            UI.BTN_UNDO.setAttribute('disabled', false)
+
+            // increment move count and update move display
+            UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+            // start timer
+            if (!started) start_timer()
+
+            render()
+
+            // check if won/lost
+            check_gameover()
+        } else {
+            // place the card on a matching stack
+            let target_stack
+
+            // go through put stacks to find a match
+            for (let x = 0; x < put_stacks.length; x++) {
+                // if matches
+                if (check_for_match({ where: 'put_stack', x: x }, hover_target.hovered_card)) {
+                    // set target stack
+                    target_stack = {
+                        where: 'put_stack',
+                        x: x
+                    }
+                    break
+                }
+            }
+
+            // go through main stacks to find a match
+            if (!target_stack) {
+                for (let x = 0; x < main_stacks.length; x++) {
+                    if (check_for_match({ where: 'main_stack', x: x }, hover_target.hovered_card)) {
+                        // set target stack
+                        target_stack = {
+                            where: 'main_stack',
+                            x: x
+                        }
+                        break
+                    }
+                }
+            }
+
+            if (target_stack) {
+                // remove card from pull_stack
+                let popped_cards = pull_stack.splice(hover_target.hovered_stack.x, 1)
+
+                // push to desired stack
+                if (target_stack.where == 'put_stack') put_stacks[target_stack.x].push(...popped_cards)
+                else if (target_stack.where == 'main_stack') main_stacks[target_stack.x].push(...popped_cards)
+
+                if (target_stack.where == 'put_stack')
+                    // save action
+                    last_action = {
+                        action: 'drop',
+                        drag_target: hover_target.hovered_stack,
+                        drop_target: {
+                            where: 'put_stack',
+                            x: target_stack.x,
+                            y: put_stacks[target_stack.x].length - 1
+                        },
+                        popped_cards: popped_cards,
+                        opened_card: false,
+                        old_open_pull_stack_cards: open_pull_stack_cards,
+                        last_action: last_action
+                    }
+                else if (target_stack.where == 'main_stack') last_action = {
+                    action: 'drop',
+                    drag_target: hover_target.hovered_stack,
+                    drop_target: {
+                        where: 'main_stack',
+                        x: target_stack.x,
+                        y: main_stacks[target_stack.x].length - 1
+                    },
+                    popped_cards: popped_cards,
+                    opened_card: false,
+                    old_open_pull_stack_cards: open_pull_stack_cards,
+                    last_action: last_action
+                }
+
+                open_pull_stack_cards--
+
+                // enable undo button
+                UI.BTN_UNDO.setAttribute('disabled', false)
+
+                // increment move count and update move display
+                UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+                // start timer
+                if (!started) start_timer()
+
+                // rerender
+                render()
+
+                // check if won/lost
+                check_gameover()
+            }
+        }
+    } else if (hover_target.hovered_stack.where == 'put_stack') {
+        // if put stack double clicked
+        // place the card on a matching stack
+        let target_stack
+
+        // go through main stacks to find a match
+        for (let x = 0; x < main_stacks.length; x++) {
+            if (check_for_match({ where: 'main_stack', x: x }, hover_target.hovered_card)) {
+                // set target stack
+                target_stack = {
+                    where: 'main_stack',
+                    x: x
+                }
+                break
+            }
+        }
+
+        if (target_stack) {
+            // stack to pull card from
+            let put_stack = put_stacks[hover_target.hovered_stack.x]
+
+            // remove card
+            let popped_card = put_stack.pop()
+
+            // push card to desired stack
+            main_stacks[target_stack.x].push(popped_card)
+
+            // save last action
+            last_action = {
+                action: 'drop',
+                drag_target: hover_target.hovered_stack,
+                drop_target: {
+                    where: 'main_stack',
+                    x: target_stack.x,
+                    y: main_stacks[target_stack.x].length - 1
+                },
+                popped_cards: [popped_card],
+                opened_card: false,
+                last_action: last_action
+            }
+
+            // enable undo button
+            UI.BTN_UNDO.setAttribute('disabled', false)
+
+            // increment move count and update move display
+            UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
+
+            // start timer
+            if (!started) start_timer()
+
+            // rerender
+            render()
+
+            // check if won/lost
+            check_gameover()
+        }
+    }
+}
+
+// handle doubleclick
 function handle_doubleclick() {
     // for drag check
     mouse_down = false
 
+    // get hovered card
     let hover_target = get_hover_target()
-    if (hover_target.hovered_card) {
-        /*
-            TODO: IMPLEMENT AUTOMATIC CARD PLACING ON DOUBLECLICK
-        */
-    }
+
+    // if a card is hovered & card is open, automaticaly place
+    if (hover_target.hovered_card?.open) place_card(hover_target)
 }
 
 // update mouse position and check for drag
