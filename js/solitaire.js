@@ -437,18 +437,48 @@ function undo() {
 
 // solve and end the game (for testing)
 function solve() {
+    // empty all stacks
     main_stacks = [[], [], [], [], [], [], []]
     pull_stack = []
     put_stacks = [[], [], [], []]
+
+    // copy all cards
     let cards = [...initial_card_states]
+
+    // put into stacks
     for (let card of cards) {
         card.open = true
-        let i = CARD_COLORS.indexOf(card.color)
-        put_stacks[i].push(card)
+        put_stacks[CARD_COLORS.indexOf(card.color)].push(card)
     }
+
+    // start animation
     gameover = true
+
     render()
     start_win_animation()
+}
+
+// one step before solve (for testing)
+function almost_solve() {
+    // empty all stacks
+    main_stacks = [[], [], [], [], [], [], []]
+    pull_stack = []
+    put_stacks = [[], [], [], []]
+
+    // copy all cards
+    let cards = [...initial_card_states]
+
+    // put into stacks
+    for (let card of cards) {
+        card.open = true
+        put_stacks[CARD_COLORS.indexOf(card.color)].push(card)
+    }
+
+    // put king into main stack 3
+    main_stacks[3].push(put_stacks[3].pop())
+
+    // refresh
+    render()
 }
 
 // check which card and stack is being hovered

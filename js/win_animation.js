@@ -20,14 +20,14 @@ let animation_stack
 
 // start animating cards
 function start_win_animation() {
-    animation_stack = [...put_stacks].map(stack => stack.reverse())
+    // go through stacks
     for (let x = 0; x < put_stacks.length; x++) {
         // get stack
-        let put_stack = animation_stack[x]
+        let put_stack = [...[...put_stacks][x]]
 
-        for (let y = 0; y < put_stack.length; y++) {
+        for (let y = 0; y < 13; y++) {
             // get card
-            let card = put_stack[y]
+            let card = put_stack.pop()
 
             // initial card position
             card.position = {
