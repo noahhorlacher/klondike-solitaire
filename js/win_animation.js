@@ -5,10 +5,10 @@ const CARD_ANGLE_RANGE = {
 }
 
 // card speed
-const CARD_SPEED = 4
+const CARD_SPEED = 4 * SCALE
 
 // gravity
-const GRAVITY = 2
+const GRAVITY = 2 * SCALE
 
 // delay until next card starts animating
 const CARD_DELAY = 500
@@ -61,8 +61,8 @@ function card_win_animation(card) {
     }
 
     // bounce off ceiling or floor
-    if (card.position.y >= HEIGHT - DESIGN.CARD.SIZE.Y || card.position.y <= 0) {
-        card.position.y = card.position.y <= 0 ? 0 : HEIGHT - DESIGN.CARD.SIZE.Y
+    if (card.position.y >= (HEIGHT * SCALE) - DESIGN.CARD.SIZE.Y || card.position.y <= 0) {
+        card.position.y = card.position.y <= 0 ? 0 : (HEIGHT * SCALE) - DESIGN.CARD.SIZE.Y
         card.velocity.y *= -1 * BOUNCINESS
     }
 
@@ -70,7 +70,7 @@ function card_win_animation(card) {
     draw_card(card, card.position.x, card.position.y)
 
     // stop rendering if out of view
-    if (card.position.x > WIDTH || card.position.x < -DESIGN.CARD.SIZE.X) {
+    if (card.position.x > (WIDTH * SCALE) || card.position.x < -DESIGN.CARD.SIZE.X) {
         clearInterval(card.interval)
         delete card.interval
     }
