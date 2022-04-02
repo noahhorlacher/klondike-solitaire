@@ -52,7 +52,8 @@ const UI = {
     BTN_FINISH: document.querySelector('#btn_finish'),
     LABEL_TIMER: document.querySelector('#label_timer'),
     LABEL_MOVES: document.querySelector('#label_moves'),
-    BTN_RESET: document.querySelector('#btn_reset'),
+    BTN_RESTART: document.querySelector('#btn_restart'),
+    BTN_NEW_GAME: document.querySelector('#btn_new_game'),
     CONTAINER_LOADER: document.querySelector('#container_loader'),
     LABEL_LOADER: document.querySelector('#label_loader')
 }
@@ -123,6 +124,9 @@ const CLICK_DELAY = 50
 
 // copy of the canvas image to render dragging on top of
 let snapshot
+
+// deep copy of initial card configuration for resetting
+let initial_configuration
 
 // main rendering function
 function render() {
@@ -357,15 +361,8 @@ function render_cards() {
     render_drag_stack()
 }
 
-// reset the game
-function reset() {
-    // stop/interrupt the finish animation
-    stop_finish_animation()
-
-    // start loading animation
-    start_load_animation()
-
-    // reset game variables
+// reset all game variables
+function reset_game_variables() {
     loading = true
     open_pull_stack_cards = 0
     drag_stack = []
@@ -375,15 +372,94 @@ function reset() {
     last_action = null
     moves = 0
     started = false
+}
 
+// reset the ui
+function reset_ui() {
     // disable undo button
     UI.BTN_UNDO.setAttribute('disabled', true)
 
     // disable finish button
     UI.BTN_FINISH.setAttribute('disabled', true)
 
+    // disable reset button
+    UI.BTN_RESTART.setAttribute('disabled', true)
+
     // reset move display
     UI.LABEL_MOVES.textContent = `Moves: 0`
+}
+
+// start over
+function restart() {
+    // stop/interrupt the finish animation
+    stop_finish_animation()
+
+    // start loading animation
+    start_load_animation()
+
+    // reset game variables
+    reset_game_variables()
+
+    // clone stacks
+    pull_stack = JSON.parse(JSON.stringify(initial_configuration.pull_stack))
+    put_stacks = JSON.parse(JSON.stringify(initial_configuration.put_stacks))
+    main_stacks = JSON.parse(JSON.stringify(initial_configuration.main_stacks))
+
+    // set images again
+    pull_stack.forEach(card =>
+        card.image = initial_card_states.find(
+            search_card =>
+                search_card.color == card.color &&
+                search_card.value == card.value
+        ).image
+    )
+    main_stacks.forEach(stack => stack.forEach(card =>
+        card.image = initial_card_states.find(
+            search_card =>
+                search_card.color == card.color &&
+                search_card.value == card.value
+        ).image
+    ))
+    put_stacks.forEach(stack => stack.forEach(card =>
+        card.image = initial_card_states.find(
+            search_card =>
+                search_card.color == card.color &&
+                search_card.value == card.value
+        ).image
+    ))
+
+    // reset the gui
+    reset_ui()
+
+    // stop loading status
+    loading = false
+
+    // stop loading animation
+    stop_load_animation()
+
+    // render the board once
+    render()
+
+    // reset timer
+    reset_timer()
+
+    // rerender
+    render()
+}
+
+// start new game
+function new_game() {
+    // stop/interrupt the finish animation
+    stop_finish_animation()
+
+    // start loading animation
+    start_load_animation()
+
+    // reset game variables
+    reset_game_variables()
+
+    // reset UI
+    reset_ui()
 
     // stop/interrupt win animation
     stop_win_animation()
@@ -414,7 +490,14 @@ function reset() {
     // open mainstack cards
     for (let i = 0; i < 7; i++) main_stacks[i][i].open = true
 
-    // stop status
+    // save initial card config
+    initial_configuration = {
+        pull_stack: JSON.parse(JSON.stringify(pull_stack)),
+        put_stacks: JSON.parse(JSON.stringify(put_stacks)),
+        main_stacks: JSON.parse(JSON.stringify(main_stacks))
+    }
+
+    // stop loading status
     loading = false
 
     // stop loading animation
@@ -424,8 +507,7 @@ function reset() {
     render()
 
     // reset timer
-    if (timer) clearInterval(timer)
-    UI.LABEL_TIMER.textContent = 'Time: 00:00:00'
+    reset_timer()
 
     // fade in if not yet faded in
     if (!UI.CANVAS.classList.contains('loaded')) UI.CANVAS.classList.add('loaded')
@@ -465,7 +547,7 @@ async function setup() {
             })
 
     // start
-    reset()
+    new_game()
 }
 
 // undo the last step
@@ -729,7 +811,6 @@ function get_hover_target() {
 
 // if started dragging
 function handle_drag_start() {
-    console.log('drag start')
     // check if a card and which one is being dragged
     let hover_target = get_hover_target()
 
@@ -829,7 +910,7 @@ function handle_drag_end() {
             UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
 
             // start timer
-            if (!started) start_timer()
+            if (!started) on_start()
 
             // remove card from old stack
             if (drag_target.where == 'main_stack') {
@@ -889,7 +970,7 @@ function check_gameover() {
         UI.BTN_UNDO.setAttribute('disabled', true)
 
         // stop timer
-        if (timer) clearInterval(timer)
+        stop_timer()
 
         // trigger rerender so card falls in place first
         render()
@@ -935,6 +1016,18 @@ function check_for_match(drop_target, drop_card) {
     return false
 }
 
+// first action was taken
+function on_start() {
+    // enable reset button
+    UI.BTN_RESTART.setAttribute('disabled', false)
+
+    // start timing
+    start_timer()
+
+    // set flag
+    started = true
+}
+
 // start the timer
 function start_timer() {
     start_time = new Date().getTime()
@@ -953,6 +1046,17 @@ function start_timer() {
         UI.LABEL_TIMER.textContent = `Time: ${h}:${m}:${s}`
     }, 100)
     started = true
+}
+
+// stop the timer
+function stop_timer() {
+    if (timer) clearInterval(timer)
+}
+
+// reset the timer
+function reset_timer() {
+    if (timer) clearInterval(timer)
+    UI.LABEL_TIMER.textContent = 'Time: 00:00:00'
 }
 
 // pull a card
@@ -974,7 +1078,7 @@ function pull_card() {
     UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
 
     // start timer
-    if (!started) start_timer()
+    if (!started) on_start()
 
     // pull a card
     open_pull_stack_cards = open_pull_stack_cards == pull_stack.length ? 0 : open_pull_stack_cards + 1
@@ -985,7 +1089,6 @@ function pull_card() {
 
 // handle click in canvas
 function handle_click() {
-    console.log('clicked')
     // for drag check
     mouse_down = false
 
@@ -1042,8 +1145,9 @@ function place_card(hover_target) {
             UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
 
             // start timer
-            if (!started) start_timer()
+            if (!started) on_start()
 
+            // rerender
             render()
 
             // check if won/lost
@@ -1128,7 +1232,7 @@ function place_card(hover_target) {
                 UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
 
                 // start timer
-                if (!started) start_timer()
+                if (!started) on_start()
 
                 // rerender
                 render()
@@ -1176,7 +1280,7 @@ function place_card(hover_target) {
             UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
 
             // start timer
-            if (!started) start_timer()
+            if (!started) on_start()
 
             render()
 
@@ -1259,7 +1363,7 @@ function place_card(hover_target) {
                 UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
 
                 // start timer
-                if (!started) start_timer()
+                if (!started) on_start()
 
                 // rerender
                 render()
@@ -1316,7 +1420,7 @@ function place_card(hover_target) {
             UI.LABEL_MOVES.textContent = `Moves: ${++moves}`
 
             // start timer
-            if (!started) start_timer()
+            if (!started) on_start()
 
             // rerender
             render()
@@ -1410,7 +1514,8 @@ UI.BTN_UNDO.addEventListener('click', () => {
 UI.BTN_FINISH.addEventListener('click', () => {
     if (UI.BTN_FINISH.getAttribute('disabled') == 'false' && game_finishable()) finish()
 })
-UI.BTN_RESET.addEventListener('click', reset)
+UI.BTN_RESTART.addEventListener('click', restart)
+UI.BTN_NEW_GAME.addEventListener('click', new_game)
 
 // set width of button container
 UI.CONTAINER_CONTROLS.style.width = `${WIDTH}px`

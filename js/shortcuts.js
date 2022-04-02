@@ -1,14 +1,16 @@
 // all shortcuts
 let shortcuts = {
-    'N': reset,
-    'R': reset,
+    'N': new_game,
+    'R': e => {
+        if (started) restart()
+    },
     'U': undo,
     'Z': undo,
     ' ': e => {
         e.preventDefault()
         pull_card()
     },
-    'F': f => {
+    'F': e => {
         if (game_finishable()) finish()
     }
 }
