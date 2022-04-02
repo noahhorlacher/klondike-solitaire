@@ -5,19 +5,22 @@ const CARD_ANGLE_RANGE = {
 }
 
 // card speed
-const CARD_SPEED = 4 * SCALE
+const CARD_SPEED = 6 * SCALE
 
 // gravity
-const GRAVITY = 1 * SCALE
+const GRAVITY = .8 * SCALE
+
+// friction
+const FRICTION = .2
+
+// bounciness factor, 0-1
+const BOUNCINESS = .8
 
 // delay until next card starts animating
 const CARD_DELAY = {
     MIN: 500,
     MAX: 700
 }
-
-// bounciness factor, 0-1
-const BOUNCINESS = .9
 
 // all cards to be animated
 let full_win_animation_stack = []
@@ -30,8 +33,6 @@ function start_win_animation() {
 
     // copy of put stacks count with
     let put_stacks_copy = JSON.parse(JSON.stringify(put_stacks))
-
-    console.log('put stacks copy', put_stacks_copy)
 
     // last stack from which was popped from (to prevent popping twice in a row)
     let last_stack_x
@@ -107,28 +108,65 @@ function win_animation_render_update() {
 
 // animation of a single card
 function card_win_animation(card) {
-    // get the new position
+    // save last position
+    card.last_position = {
+        x: card.position.x,
+        y: card.position.y
+    }
+
+    // add gravity
     card.velocity.y += GRAVITY
 
+    // get new position
     card.position = {
         x: card.position.x + card.velocity.x,
         y: card.position.y + card.velocity.y
+    }
+
+    // bounce off walls
+    if (card.position.x >= (WIDTH * SCALE) - DESIGN.CARD.SIZE.X || card.position.x <= 0) {
+        card.position.x = card.position.x <= 0 ? 0 : (WIDTH * SCALE) - DESIGN.CARD.SIZE.X
+        card.velocity.x *= -1 * BOUNCINESS
+        card.velocity.y *= (1 - FRICTION)
     }
 
     // bounce off ceiling or floor
     if (card.position.y >= (HEIGHT * SCALE) - DESIGN.CARD.SIZE.Y || card.position.y <= 0) {
         card.position.y = card.position.y <= 0 ? 0 : (HEIGHT * SCALE) - DESIGN.CARD.SIZE.Y
         card.velocity.y *= -1 * BOUNCINESS
+        card.velocity.x *= (1 - FRICTION)
     }
 
     // draw the card
     draw_card(card, card.position.x, card.position.y)
 
-    // stop rendering if out of view
-    if (card.position.x > (WIDTH * SCALE) || card.position.x < -DESIGN.CARD.SIZE.X) {
-        let card_index = current_win_animation_stack.findIndex(search_card => search_card == card)
-        current_win_animation_stack.splice(card_index, 1)
+    // stop rendering this card if not moving for 200ms
+    // if card has moved
+    let card_has_moved = card_moved(card)
+
+    if (card_has_moved && card.move_timeout) {
+        // clear timeout if moved
+        clearTimeout(card.move_timeout)
+        card.move_timeout = null
+    } else if (!card_has_moved && !card.move_timeout) {
+        // check if still hasn't moved after 200ms
+        card.move_timeout = setTimeout(() => {
+            if (!card_moved(card)) {
+                // remove card from animation stack
+                let card_index = current_win_animation_stack.findIndex(search_card =>
+                    search_card.value == card.value &&
+                    search_card.color == card.color
+                )
+                current_win_animation_stack.splice(card_index, 1)
+            }
+        }, 200)
     }
+}
+
+// if card has moved since last frame
+function card_moved(card) {
+    return Math.round(card.last_position.x * 10) != Math.round(card.position.x * 10) &&
+        Math.round(card.last_position.y * 10) != Math.round(card.position.y * 10)
 }
 
 // stop/interrupt the win animation
