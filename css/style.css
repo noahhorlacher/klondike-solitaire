@@ -94,6 +94,11 @@ p {
 	height: 100vh;
 	transition: opacity 1s;
 	border-radius: 4px;
+	background-image: linear-gradient(
+		to bottom,
+		hsl(120, 25%, 43%),
+		hsl(140, 25%, 30%)
+	);
 }
 
 #container_loader.loading {
