@@ -275,12 +275,24 @@ function render_put_stacks() {
 
 // render the currently dragged stack
 function render_drag_stack() {
+    // render all drag stack cards
     drag_stack.forEach((card, i) => {
+        // get card offset from original position
         let offset = {
             x: drag_position.x - card.position.x,
             y: drag_position.y - card.position.y
         }
-        draw_card(card, mouse_position.x - offset.x, mouse_position.y - offset.y)
+
+        // restrict to boundaries
+        let position = {
+            x: Math.min(Math.max(mouse_position.x - offset.x, 0), (WIDTH * SCALE) - DESIGN.CARD.SIZE.X),
+            y: Math.min(Math.max(mouse_position.y - offset.y, 0), (HEIGHT * SCALE) - DESIGN.CARD.SIZE.Y)
+        }
+
+        // draw the card
+        draw_card(card, position.x, position.y)
+
+        // remove position property
         delete drag_stack[i].position
     })
 }
@@ -1275,11 +1287,10 @@ document.addEventListener('mousemove', e => {
     mouse_position.x = (e.clientX - RECT.left) * SCALE
     mouse_position.y = (e.clientY - RECT.top) * SCALE
 
-    // drag check/rerender only when inside canvas
-    if (mouse_over(0, 0, WIDTH * SCALE, HEIGHT * SCALE)) {
-        if (drag_stack.length > 0) handle_drag()
-        else if (mouse_down) handle_drag_start()
-    }
+    // drag start check only when inside canvas
+    if (mouse_over(0, 0, WIDTH * SCALE, HEIGHT * SCALE) && mouse_down) handle_drag_start()
+    // handle drag always
+    else if (drag_stack.length > 0) handle_drag()
 })
 
 // check for click in canvas
@@ -1301,7 +1312,7 @@ UI.CANVAS.addEventListener('dblclick', e => {
 UI.CANVAS.addEventListener('mousedown', e => {
     mouse_down = true
 })
-UI.CANVAS.addEventListener('mouseup', e => {
+document.addEventListener('mouseup', e => {
     if (drag_stack.length > 0) handle_drag_end()
     mouse_down = false
 })
