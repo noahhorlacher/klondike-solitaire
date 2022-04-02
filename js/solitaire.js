@@ -119,7 +119,10 @@ let started, timer, start_time
 
 // doubleclick variables
 let doubleclick_timer = 0, doubleclick_prevent = false
-const DOUBLECLICK_DELAY = 100
+const DOUBLECLICK_DELAY = 50
+
+// copy of the canvas image to render dragging on top of
+let snapshot
 
 // main rendering function
 function render() {
@@ -180,6 +183,55 @@ function render_board() {
 function draw_card(card, x, y) {
     let image = card?.open ? card.image : card_images['BACK']
     CTX.drawImage(image, x, y, DESIGN.CARD.SIZE.X, DESIGN.CARD.SIZE.Y)
+}
+
+// update card positions without rendering
+function update_card_positions() {
+    // pull stack
+    if (open_pull_stack_cards > 0) {
+        // right side of pull stack
+        const RIGHT_SIDE = [...pull_stack].splice(
+            pull_stack.length - open_pull_stack_cards,
+            Math.min(open_pull_stack_cards, 3) // max 3 cards
+        )
+
+        // save card position
+        for (let i = 0; i < RIGHT_SIDE.length; i++) RIGHT_SIDE[RIGHT_SIDE.length - 1 - i].position = {
+            x: DESIGN.PULL_STACK.POSITION.X + DESIGN.CARD.SIZE.X + 20 + i * DESIGN.PULL_STACK.STACKING_OFFSET,
+            y: DESIGN.PULL_STACK.POSITION.Y
+        }
+    }
+
+    // main stacks
+    for (let x = 0; x < 7; x++) {
+        let current_offset = 0
+
+        // update each card
+        for (let y = 0; y < main_stacks[x].length; y++) {
+            // the card
+            let card = main_stacks[x][y]
+
+            // save card position
+            card.position = {
+                x: DESIGN.MAIN_STACKS[x].POSITION.X,
+                y: DESIGN.MAIN_STACKS[x].POSITION.Y + current_offset
+            }
+
+            // increment offset
+            if (y < main_stacks[x].length - 1) current_offset += DESIGN.CARD.STACKING_OFFSET[card.open ? 'OPEN' : 'CLOSED']
+        }
+    }
+
+    // put stacks
+    put_stacks.forEach((putstack, x) => {
+        // save card position if stack has cards
+        if (putstack.length > 0) {
+            putstack.at(-1).position = {
+                x: DESIGN.PUT_STACKS[x].POSITION.X,
+                y: DESIGN.PUT_STACKS[x].POSITION.Y
+            }
+        }
+    })
 }
 
 // render the stack to pull from top left
@@ -421,6 +473,10 @@ function undo() {
     // ignore if no last action
     if (!last_action) return
 
+    // cancel drag and drop
+    mouse_down = false
+    drag_stack = []
+
     if (last_action.action == 'drop') {
         // if dropped a card or stack of cards
         // if card was opened in last action, close again
@@ -551,8 +607,8 @@ function before_finish() {
 
 // check which card and stack is being hovered
 function get_hover_target() {
-    // update positions
-    render()
+    // update card positions
+    update_card_positions()
 
     let hovered_card = null
     let hovered_stack = null
@@ -673,9 +729,6 @@ function get_hover_target() {
 
 // if started dragging
 function handle_drag_start() {
-    // rerender first
-    render()
-
     // check if a card and which one is being dragged
     let hover_target = get_hover_target()
 
@@ -701,17 +754,37 @@ function handle_drag_start() {
         // update drag position
         drag_position.x = mouse_position.x
         drag_position.y = mouse_position.y
+
+        // render everything except drag stack
+        render_board()
+        render_pull_stack()
+        render_put_stacks()
+        render_main_stacks()
+
+        // save the current render
+        snapshot = CTX.getImageData(0, 0, WIDTH * SCALE, HEIGHT * SCALE)
     } else mouse_down = false
 }
 
-// while dragging
+// while dragging, render drag stack on top of still image of board before draggin
 function handle_drag() {
-    render()
+    // render board
+    CTX.putImageData(snapshot, 0, 0)
+
+    // update card positions
+    update_card_positions()
+
+    // render drack stack
+    render_drag_stack()
 }
 
 // if stopped dragging
 function handle_drag_end() {
+    // get hovered stack
     let hover_target = get_hover_target()
+
+    // delete canvas snapshot
+    snapshot = null
 
     // if dropping on put or main stack and dropping on a different stack than starting stack
     if (
@@ -1268,6 +1341,10 @@ function handle_doubleclick() {
 
 // start animation for putting remaining cards on putstack
 function finish() {
+    // cancel drag and drop
+    mouse_down = false
+    drag_stack = []
+
     // set gameover flag to disable interaction
     gameover = true
 
@@ -1287,8 +1364,8 @@ document.addEventListener('mousemove', e => {
     mouse_position.x = (e.clientX - RECT.left) * SCALE
     mouse_position.y = (e.clientY - RECT.top) * SCALE
 
-    // drag start check only when inside canvas
-    if (mouse_over(0, 0, WIDTH * SCALE, HEIGHT * SCALE) && mouse_down) handle_drag_start()
+    // drag start check only when inside canvas, mouse down and not already dragging
+    if (mouse_over(0, 0, WIDTH * SCALE, HEIGHT * SCALE) && mouse_down && !drag_target) handle_drag_start()
     // handle drag always
     else if (drag_stack.length > 0) handle_drag()
 })
@@ -1308,7 +1385,7 @@ UI.CANVAS.addEventListener('dblclick', e => {
     handle_doubleclick()
 })
 
-// check for drag and drop
+// check mouse down/up for drag and drop
 UI.CANVAS.addEventListener('mousedown', e => {
     mouse_down = true
 })
