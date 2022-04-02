@@ -118,8 +118,8 @@ let last_action
 let started, timer, start_time
 
 // doubleclick variables
-let doubleclick_timer = 0, doubleclick_prevent = false
-const DOUBLECLICK_DELAY = 50
+let click_timer, click_prevent = false
+const CLICK_DELAY = 50
 
 // copy of the canvas image to render dragging on top of
 let snapshot
@@ -729,6 +729,7 @@ function get_hover_target() {
 
 // if started dragging
 function handle_drag_start() {
+    console.log('drag start')
     // check if a card and which one is being dragged
     let hover_target = get_hover_target()
 
@@ -984,6 +985,7 @@ function pull_card() {
 
 // handle click in canvas
 function handle_click() {
+    console.log('clicked')
     // for drag check
     mouse_down = false
 
@@ -1339,6 +1341,17 @@ function handle_doubleclick() {
     if (hover_target.hovered_card?.open) place_card(hover_target)
 }
 
+// handle mousedown
+function handle_mousedown() {
+    mouse_down = true
+}
+
+// handle mouseup
+function handle_mouseup() {
+    if (drag_stack.length > 0) handle_drag_end()
+    mouse_down = false
+}
+
 // start animation for putting remaining cards on putstack
 function finish() {
     // cancel drag and drop
@@ -1371,28 +1384,24 @@ document.addEventListener('mousemove', e => {
 })
 
 // check for click in canvas
-UI.CANVAS.addEventListener('click', e =>
-    doubleclick_timer = setTimeout(() => {
-        if (!doubleclick_prevent) handle_click()
-        doubleclick_prevent = false
-    }, DOUBLECLICK_DELAY)
-)
+UI.CANVAS.addEventListener('click', e => {
+    // ignore if doubleclicked    
+    click_timer = setTimeout(() => {
+        if (!click_prevent) handle_click()
+        click_prevent = false
+    }, CLICK_DELAY)
+})
 
 // check for doubleclick in canvas
 UI.CANVAS.addEventListener('dblclick', e => {
-    clearTimeout(doubleclick_timer)
-    doubleclick_prevent = true
+    clearTimeout(click_timer)
+    click_prevent = true
     handle_doubleclick()
 })
 
 // check mouse down/up for drag and drop
-UI.CANVAS.addEventListener('mousedown', e => {
-    mouse_down = true
-})
-document.addEventListener('mouseup', e => {
-    if (drag_stack.length > 0) handle_drag_end()
-    mouse_down = false
-})
+UI.CANVAS.addEventListener('mousedown', handle_mousedown)
+document.addEventListener('mouseup', handle_mouseup)
 
 // button actions
 UI.BTN_UNDO.addEventListener('click', () => {
