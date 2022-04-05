@@ -1281,9 +1281,9 @@ function place_card(hover_target) {
                 if (target_stack.where == 'put_stack') put_stacks[target_stack.x].push(...popped_cards)
                 else if (target_stack.where == 'main_stack') main_stacks[target_stack.x].push(...popped_cards)
 
-                // reveal uppermost card if has any
+                // reveal uppermost card if has a closed card on top
                 let opened_card = false
-                if (main_stack.length > 0) main_stack.at(-1).open = opened_card = true
+                if (main_stack.length > 0 && !main_stack.at(-1).open) main_stack.at(-1).open = opened_card = true
 
                 if (target_stack.where == 'put_stack')
                     // save action
