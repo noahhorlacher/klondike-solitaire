@@ -463,9 +463,6 @@ function new_game() {
     // reset UI
     reset_ui()
 
-    // stop/interrupt win animation
-    stop_win_animation()
-
     // initialize stacks
     pull_stack = []
     put_stacks = [[], [], [], []]
