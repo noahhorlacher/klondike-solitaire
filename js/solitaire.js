@@ -922,10 +922,11 @@ function handle_drag_end() {
             if (drag_target.where == 'main_stack') {
                 // remove cards from mainstack
                 main_stacks[drag_target.x].splice(drag_target.y)
-                // open uppermost card of drag target if it has one left
-                if (main_stacks[drag_target.x].length > 0) {
+                // open uppermost card of drag target if it has one left and isn't open yet
+                if (main_stacks[drag_target.x].length > 0 && !main_stacks[drag_target.x].at(-1).open) {
                     main_stacks[drag_target.x].at(-1).open = true
                     last_action.opened_card = true
+                    console.log('opening card')
                 }
             } else if (drag_target.where == 'put_stack') {
                 // remove card from putstack
