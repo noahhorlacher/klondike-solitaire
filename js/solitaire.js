@@ -960,6 +960,72 @@ function game_finishable() {
     return pull_stack.length == 0 && !main_stacks.some(stack => stack.some(card => card.open == false))
 }
 
+// get an array of possible moves
+function get_possible_moves() {
+    let possible_moves = []
+
+    // check pull stack cards
+    pull_stack.forEach((_card, x) => {
+        // get card
+        let card = pull_stack[pull_stack.length - 1 - x]
+
+        // check for put stack matches 
+        put_stacks.forEach((put_stack, x2) => {
+            if (check_for_match({ where: 'put_stack', x: x2, target_stack: put_stack }, card))
+                possible_moves.push({
+                    drop_target: { where: 'put_stack', x: x2, target_stack: put_stack },
+                    drop_card: card
+                })
+        })
+
+        // check for main stack matches
+        main_stacks.forEach((main_stack, x2) => {
+            if (check_for_match({ where: 'main_stack', x: x2, target_stack: main_stack }, card))
+                possible_moves.push({
+                    drop_target: { where: 'main_stack', x: x2, target_stack: main_stack },
+                    drop_card: card
+                })
+        })
+    })
+
+    // check main stack cards
+    main_stacks.forEach(current_main_stack => {
+        // skip if this stack is empty
+        if (current_main_stack.length == 0) return
+
+        // go through cards
+        current_main_stack.forEach((card, y) => {
+            // skip if card isn't open
+            if (!card.open) return
+
+            // check for put stack matches 
+            put_stacks.forEach((put_stack, x2) => {
+                if (check_for_match({ where: 'put_stack', x: x2, target_stack: put_stack }, card))
+                    possible_moves.push({
+                        drop_target: { where: 'put_stack', x: x2, target_stack: put_stack },
+                        drop_card: card
+                    })
+            })
+
+            // check for main stack matches
+            main_stacks.forEach((main_stack, x2) => {
+                // skip if drop single king on empty main stack
+                if (main_stack.length == 0 && card.value == 'K' && y == 0) return
+
+                if (check_for_match({ where: 'main_stack', x: x2, target_stack: main_stack }, card))
+                    possible_moves.push({
+                        drop_target: { where: 'main_stack', x: x2, target_stack: main_stack },
+                        drop_card: card
+                    })
+            })
+        })
+    })
+
+    console.log('possible moves:', possible_moves)
+
+    return possible_moves
+}
+
 // check if won or game is unsolvable
 function check_gameover() {
     if (!put_stacks.some(stack => stack.length != 13)) {
@@ -980,6 +1046,21 @@ function check_gameover() {
     } else if (game_finishable()) {
         // enable finish button if game finishable
         UI.BTN_FINISH.setAttribute('disabled', false)
+    } else if (get_possible_moves().length == 0) {
+        // game lost
+        gameover = true
+
+        // disable undo button
+        UI.BTN_UNDO.setAttribute('disabled', true)
+
+        // stop timer
+        stop_timer()
+
+        // trigger rerender so card falls in place first
+        render()
+
+        // start the lost animation
+        start_win_animation()
     }
 }
 
