@@ -404,29 +404,6 @@ function restart() {
     put_stacks = clone_stack(initial_configuration.put_stacks)
     main_stacks = clone_stack(initial_configuration.main_stacks)
 
-    // set images again
-    pull_stack.forEach(card =>
-        card.image = initial_card_states.find(
-            search_card =>
-                search_card.color == card.color &&
-                search_card.value == card.value
-        ).image
-    )
-    main_stacks.forEach(stack => stack.forEach(card =>
-        card.image = initial_card_states.find(
-            search_card =>
-                search_card.color == card.color &&
-                search_card.value == card.value
-        ).image
-    ))
-    put_stacks.forEach(stack => stack.forEach(card =>
-        card.image = initial_card_states.find(
-            search_card =>
-                search_card.color == card.color &&
-                search_card.value == card.value
-        ).image
-    ))
-
     // reset the gui
     reset_ui()
 
@@ -541,7 +518,6 @@ async function setup() {
             initial_card_states.push({
                 value: value,
                 color: color,
-                image: card_images[`${value}${color}`],
                 open: false
             })
 
@@ -1409,6 +1385,9 @@ function place_card(hover_target) {
                 // remove card from pull_stack
                 let popped_cards = pull_stack.splice(hover_target.hovered_stack.x, 1)
 
+                // open cards
+                //popped_cards.forEach(card => card.open = true)
+
                 // push to desired stack
                 if (target_stack.where == 'put_stack') put_stacks[target_stack.x].push(...popped_cards)
                 else if (target_stack.where == 'main_stack') main_stacks[target_stack.x].push(...popped_cards)
@@ -1519,6 +1498,25 @@ function place_card(hover_target) {
     }
 }
 
+// pull card and autoplace
+function auto_pull() {
+    if (loading || gameover || pull_stack.length == 0 || open_pull_stack_cards == 0) return // skip if loading or game over
+
+    console.log('autoplace')
+
+    // get hovered card
+    let hover_target = {
+        hovered_stack: {
+            where: 'pull_stack',
+            x: pull_stack.length - open_pull_stack_cards
+        },
+        hovered_card: pull_stack[pull_stack.length - open_pull_stack_cards]
+    }
+
+    // if a card is hovered and open, card is automatically placed
+    place_card(hover_target)
+}
+
 // handle rightclick
 function handle_rightclick() {
     // for drag check
@@ -1529,7 +1527,7 @@ function handle_rightclick() {
     // get hovered card
     let hover_target = get_hover_target()
 
-    // if a card is hovered, card is open automatically placed
+    // if a card is hovered and open, card is automatically placed
     if (hover_target.hovered_card?.open) place_card(hover_target)
 }
 
