@@ -1274,7 +1274,7 @@ function place_card(hover_target) {
                 // if attempting to drop a stack on put stacks, return
                 if (
                     target_stack.where == 'put_stack' &&
-                    hover_target.hovered_stack.y != put_stacks[hover_target.hovered_stack.x].length - 1
+                    hover_target.hovered_stack.y != main_stacks[hover_target.hovered_stack.x].length - 1
                 ) return
 
                 // stack to pull card from
