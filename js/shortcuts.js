@@ -10,6 +10,9 @@ let shortcuts = {
         e.preventDefault()
         pull_card()
     },
+    'P': e => {
+
+    },
     'F': e => {
         if (game_finishable()) finish()
     }

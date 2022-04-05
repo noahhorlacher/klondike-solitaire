@@ -55,15 +55,7 @@ function mouse_over(pos_x, pos_y, size_x, size_y) {
 
 // deep clones a stack
 function clone_stack(stack) {
-    // create copy
-    let copy = JSON.parse(JSON.stringify(stack))
-
-    // set images
-    if (copy[0].length && copy[0].length > 0) {
-        for (let stack of copy) for (let card of stack) card.image = card_images[`${card.value}${card.color}`]
-    } else for (let card of copy) card.image = card_images[`${card.value}${card.color}`]
-
-    return copy
+    return JSON.parse(JSON.stringify(stack))
 }
 
 // linear interpolation for vectors

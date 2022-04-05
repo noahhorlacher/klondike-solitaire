@@ -181,7 +181,7 @@ function render_board() {
 
 // draw one card
 function draw_card(card, x, y) {
-    let image = card?.open ? card.image : card_images['BACK']
+    let image = card_images[card?.open ? card.value + card.color : 'BACK']
     CTX.drawImage(image, x, y, DESIGN.CARD.SIZE.X, DESIGN.CARD.SIZE.Y)
 }
 
@@ -1519,7 +1519,7 @@ function place_card(hover_target) {
     }
 }
 
-// handle doubleclick
+// handle rightclick
 function handle_rightclick() {
     // for drag check
     mouse_down = false

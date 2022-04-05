@@ -39,7 +39,7 @@ function start_finish_animation() {
             put_stack_index = put_stacks_copy.findIndex((put_stack, x) => check_for_match(
                 { where: 'put_stack', x: x, target_stack: put_stack }, main_stack.at(-1)
             ))
-            return put_stack_index >= 0
+            return main_stack.length > 0 && put_stack_index >= 0
         })
 
         // card found
@@ -50,6 +50,8 @@ function start_finish_animation() {
             card.y = main_stacks_copy[match_index].length - 1
             card.put_stack_index = put_stack_index
             card.is_last_card = remaining_cards == 1
+
+            if (card.value == 'K' && card.color == 'H') console.log('card before', card)
 
             // push to animation stack
             full_finish_animation_stack.push(card)
@@ -62,8 +64,8 @@ function start_finish_animation() {
 
             // set target position
             card.target_position = {
-                x: DESIGN.PUT_STACKS[match_index].POSITION.X,
-                y: DESIGN.PUT_STACKS[match_index].POSITION.Y
+                x: DESIGN.PUT_STACKS[put_stack_index].POSITION.X,
+                y: DESIGN.PUT_STACKS[put_stack_index].POSITION.Y
             }
 
             // initialize card time value
@@ -135,6 +137,7 @@ function card_finish_animation(card) {
     } else {
         // set new card position
         card.position = vector_lerp(card.start_position, card.target_position, card.time)
+        console.log(card)
         // draw the card
         draw_card(card, card.position.x, card.position.y)
         // update draw value
