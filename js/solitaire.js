@@ -1271,6 +1271,12 @@ function place_card(hover_target) {
             }
 
             if (target_stack) {
+                // if attempting to drop a stack on put stacks, return
+                if (
+                    target_stack.where == 'put_stack' &&
+                    hover_target.hovered_stack.y != put_stacks[hover_target.hovered_stack.x].length - 1
+                ) return
+
                 // stack to pull card from
                 let main_stack = main_stacks[hover_target.hovered_stack.x]
 
@@ -1528,7 +1534,7 @@ function handle_doubleclick() {
     // get hovered card
     let hover_target = get_hover_target()
 
-    // if a card is hovered & card is open, automaticaly place
+    // if a card is hovered, card is open automatically placed
     if (hover_target.hovered_card?.open) place_card(hover_target)
 }
 
