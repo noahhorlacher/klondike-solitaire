@@ -52,3 +52,13 @@ function random_range_i(min, max) {
 function mouse_over(pos_x, pos_y, size_x, size_y) {
     return mouse_position.x >= pos_x && mouse_position.x <= pos_x + size_x && mouse_position.y >= pos_y && mouse_position.y <= pos_y + size_y
 }
+
+// deep clones a stack
+function clone_stack(stack) {
+    let copy = JSON.parse(JSON.stringify(stack))
+    copy.map(card => {
+        card.image = card_images[card.value + card.color]
+        return card
+    })
+    return copy
+}

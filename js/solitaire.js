@@ -400,9 +400,9 @@ function restart() {
     reset_game_variables()
 
     // clone stacks
-    pull_stack = JSON.parse(JSON.stringify(initial_configuration.pull_stack))
-    put_stacks = JSON.parse(JSON.stringify(initial_configuration.put_stacks))
-    main_stacks = JSON.parse(JSON.stringify(initial_configuration.main_stacks))
+    pull_stack = clone_stack(initial_configuration.pull_stack)
+    put_stacks = clone_stack(initial_configuration.put_stacks)
+    main_stacks = clone_stack(initial_configuration.main_stacks)
 
     // set images again
     pull_stack.forEach(card =>
@@ -494,9 +494,9 @@ function new_game() {
 
     // save initial card config
     initial_configuration = {
-        pull_stack: JSON.parse(JSON.stringify(pull_stack)),
-        put_stacks: JSON.parse(JSON.stringify(put_stacks)),
-        main_stacks: JSON.parse(JSON.stringify(main_stacks))
+        pull_stack: clone_stack(pull_stack),
+        put_stacks: clone_stack(put_stacks),
+        main_stacks: clone_stack(main_stacks)
     }
 
     // stop loading status
@@ -924,7 +924,6 @@ function handle_drag_end() {
                 if (main_stacks[drag_target.x].length > 0 && !main_stacks[drag_target.x].at(-1).open) {
                     main_stacks[drag_target.x].at(-1).open = true
                     last_action.opened_card = true
-                    console.log('opening card')
                 }
             } else if (drag_target.where == 'put_stack') {
                 // remove card from putstack
@@ -1026,7 +1025,7 @@ function get_possible_moves() {
         })
     })
 
-    console.log('possible moves:', possible_moves)
+    // console.log('possible moves:', possible_moves)
 
     return possible_moves
 }

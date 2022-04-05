@@ -15,10 +15,10 @@ function start_finish_animation() {
     let remaining_cards = main_stacks.reduce((sum, stack) => sum + stack.length, 0)
 
     // use deep copy of main_stacks to remove checked cards
-    let main_stacks_copy = JSON.parse(JSON.stringify(main_stacks))
+    let main_stacks_copy = clone_stack(main_stacks)
 
     // use deep copy of main_stacks to push checked cards
-    let put_stacks_copy = JSON.parse(JSON.stringify(put_stacks))
+    let put_stacks_copy = clone_stack(put_stacks)
 
     // for all cards
     while (remaining_cards > 0) {

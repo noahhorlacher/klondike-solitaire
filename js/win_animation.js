@@ -32,7 +32,7 @@ function start_win_animation() {
     let cards_left = 52
 
     // copy of put stacks count with
-    let put_stacks_copy = JSON.parse(JSON.stringify(put_stacks))
+    let put_stacks_copy = clone_stack(put_stacks)
 
     // last stack from which was popped from (to prevent popping twice in a row)
     let last_stack_x
@@ -54,9 +54,6 @@ function start_win_animation() {
 
         // get card
         let card = put_stacks_copy[x].pop()
-
-        // get card image again
-        card.image = put_stacks[x][put_stacks[x].length - 1 - y].image
 
         // initial card position
         card.position = {
