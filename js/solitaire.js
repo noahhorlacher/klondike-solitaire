@@ -118,10 +118,6 @@ let last_action
 // timer variables
 let started, timer, start_time
 
-// doubleclick variables
-let click_timer, click_prevent = false
-const CLICK_DELAY = 50
-
 // copy of the canvas image to render dragging on top of
 let snapshot
 
@@ -851,6 +847,8 @@ function handle_drag_start() {
 
         // save the current render
         snapshot = CTX.getImageData(0, 0, WIDTH * SCALE, HEIGHT * SCALE)
+
+        render_drag_stack()
     } else mouse_down = false
 }
 
@@ -1526,7 +1524,7 @@ function place_card(hover_target) {
 }
 
 // handle doubleclick
-function handle_doubleclick() {
+function handle_rightclick() {
     // for drag check
     mouse_down = false
 
@@ -1583,18 +1581,13 @@ document.addEventListener('mousemove', e => {
 
 // check for click in canvas
 UI.CANVAS.addEventListener('click', e => {
-    // ignore if doubleclicked    
-    click_timer = setTimeout(() => {
-        if (!click_prevent) handle_click()
-        click_prevent = false
-    }, CLICK_DELAY)
+    handle_click()
 })
 
-// check for doubleclick in canvas
-UI.CANVAS.addEventListener('dblclick', e => {
-    clearTimeout(click_timer)
-    click_prevent = true
-    handle_doubleclick()
+// handle right click
+UI.CANVAS.addEventListener('contextmenu', e => {
+    e.preventDefault()
+    handle_rightclick()
 })
 
 // check mouse down/up for drag and drop
