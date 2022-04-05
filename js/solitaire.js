@@ -394,6 +394,9 @@ function restart() {
     // stop/interrupt the finish animation
     stop_finish_animation()
 
+    // stop/interrupt the win animation
+    stop_win_animation()
+
     // start loading animation
     start_load_animation()
 
@@ -451,6 +454,9 @@ function restart() {
 function new_game() {
     // stop/interrupt the finish animation
     stop_finish_animation()
+
+    // stop/interrupt the win animation
+    stop_win_animation()
 
     // start loading animation
     start_load_animation()
