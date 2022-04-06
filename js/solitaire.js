@@ -1591,6 +1591,9 @@ function handle_rightclick() {
 // handle mousedown
 function handle_mousedown() {
     mouse_down = true
+
+    // drag start check only when inside canvas, mouse down and not already dragging
+    if (mouse_over(0, 0, WIDTH * SCALE, HEIGHT * SCALE) && !drag_target) handle_drag_start()
 }
 
 // handle mouseup
@@ -1624,10 +1627,8 @@ document.addEventListener('mousemove', e => {
     mouse_position.x = (e.clientX - RECT.left) * SCALE
     mouse_position.y = (e.clientY - RECT.top) * SCALE
 
-    // drag start check only when inside canvas, mouse down and not already dragging
-    if (mouse_over(0, 0, WIDTH * SCALE, HEIGHT * SCALE) && mouse_down && !drag_target) handle_drag_start()
     // handle drag always
-    else if (drag_stack.length > 0) handle_drag()
+    if (drag_stack.length > 0) handle_drag()
 })
 
 // check for click in canvas
