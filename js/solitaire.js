@@ -24,6 +24,18 @@ const DESIGN = {
                 X: 0 * SCALE,
                 Y: 0 * SCALE
             }
+        },
+        OFFSET: {
+            X: -4 * SCALE,
+            Y: -4 * SCALE
+        },
+        SHADOW: {
+            COLOR: '#0002',
+            BLUR: 7 * SCALE,
+            OFFSET: {
+                X: 12 * SCALE,
+                Y: 12 * SCALE
+            }
         }
     },
     PUT_STACKS: [
@@ -52,11 +64,11 @@ const DESIGN = {
             CLOSED: 10 * SCALE
         },
         SHADOW: {
-            COLOR: '#0002',
-            BLUR: 5 * SCALE,
+            COLOR: '#0004',
+            BLUR: 4 * SCALE,
             OFFSET: {
-                X: 4 * SCALE,
-                Y: 4 * SCALE
+                X: 2 * SCALE,
+                Y: 2 * SCALE
             }
         }
     }
@@ -198,12 +210,12 @@ function render_board() {
 }
 
 // draw the shadow for a card
-function draw_card_shadow(x, y) {
+function draw_card_shadow(x, y, shadow) {
     // set shadow
-    CTX.shadowBlur = DESIGN.CARD.SHADOW.BLUR
-    CTX.shadowColor = DESIGN.CARD.SHADOW.COLOR
-    CTX.shadowOffsetX = DESIGN.CARD.SHADOW.OFFSET.X
-    CTX.shadowOffsetY = DESIGN.CARD.SHADOW.OFFSET.Y
+    CTX.shadowBlur = shadow.BLUR
+    CTX.shadowColor = shadow.COLOR
+    CTX.shadowOffsetX = shadow.OFFSET.X
+    CTX.shadowOffsetY = shadow.OFFSET.Y
 
     // draw shadow
     CTX.fillStyle = null
@@ -215,12 +227,12 @@ function draw_card_shadow(x, y) {
 }
 
 // draw the highlight for a card
-function draw_card_highlight(x, y) {
+function draw_card_highlight(x, y, highlight) {
     // set shadow
-    CTX.shadowBlur = DESIGN.DRAG_STACK.HIGHLIGHT.BLUR
-    CTX.shadowColor = DESIGN.DRAG_STACK.HIGHLIGHT.COLOR
-    CTX.shadowOffsetX = DESIGN.DRAG_STACK.HIGHLIGHT.OFFSET.X
-    CTX.shadowOffsetY = DESIGN.DRAG_STACK.HIGHLIGHT.OFFSET.Y
+    CTX.shadowBlur = highlight.BLUR
+    CTX.shadowColor = highlight.COLOR
+    CTX.shadowOffsetX = highlight.OFFSET.X
+    CTX.shadowOffsetY = highlight.OFFSET.Y
 
     // draw shadow
     CTX.fillStyle = null
@@ -232,9 +244,9 @@ function draw_card_highlight(x, y) {
 }
 
 // draw one card
-function draw_card(card, x, y, shadow = true, highlight = false) {
-    if (shadow) draw_card_shadow(x, y)
-    if (highlight) draw_card_highlight(x, y)
+function draw_card(card, x, y, shadow = DESIGN.CARD.SHADOW, highlight = false) {
+    if (shadow) draw_card_shadow(x, y, shadow)
+    if (highlight) draw_card_highlight(x, y, highlight)
     let image = card_images[card?.open ? card.value + card.color : 'BACK']
     CTX.drawImage(image, x, y, DESIGN.CARD.SIZE.X, DESIGN.CARD.SIZE.Y)
 }
@@ -396,7 +408,7 @@ function render_drag_stack() {
         }
 
         // draw the card with highlight
-        draw_card(card, position.x, position.y, true, true)
+        draw_card(card, position.x + DESIGN.DRAG_STACK.OFFSET.X, position.y + DESIGN.DRAG_STACK.OFFSET.Y, DESIGN.DRAG_STACK.SHADOW, DESIGN.DRAG_STACK.HIGHLIGHT)
 
         // remove position property
         delete drag_stack[i].position

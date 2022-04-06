@@ -51,8 +51,6 @@ function start_finish_animation() {
             card.put_stack_index = put_stack_index
             card.is_last_card = remaining_cards == 1
 
-            if (card.value == 'K' && card.color == 'H') console.log('card before', card)
-
             // push to animation stack
             full_finish_animation_stack.push(card)
 
