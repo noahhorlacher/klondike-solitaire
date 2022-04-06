@@ -137,7 +137,6 @@ function card_finish_animation(card) {
     } else {
         // set new card position
         card.position = vector_lerp(card.start_position, card.target_position, card.time)
-        console.log(card)
         // draw the card
         draw_card(card, card.position.x, card.position.y)
         // update draw value
